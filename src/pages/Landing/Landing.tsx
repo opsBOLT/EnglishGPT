@@ -96,7 +96,7 @@ const Landing = () => {
         </div>
 
         {/* Demo Section with Border Trail */}
-        <div className="relative z-20 w-full max-w-6xl mx-auto px-8 py-20">
+        <div className="relative z-20 w-full max-w-6xl mx-auto px-8 py-12 -mt-[40vh] md:-mt-[32vh] lg:-mt-[28vh]">
           <div className="relative w-full h-[600px] bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden">
             <BorderTrail
               className="bg-gradient-to-r from-purple-500 via-violet-500 to-purple-500"
