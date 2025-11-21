@@ -8,7 +8,9 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-white outline-none border-none">
       <div className="min-h-screen w-full relative outline-none border-none">
-        <Navbar1 />
+        <div className="pt-[15vh]">
+          <Navbar1 />
+        </div>
 
         <div
           className="absolute inset-0 z-0"
