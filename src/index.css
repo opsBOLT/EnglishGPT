@@ -8,3 +8,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+* {
+  outline: none !important;
+  border: none;
+}
+
+*:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
