@@ -1,10 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@font-face {
-  font-family: 'Onions';
-  src: url('/fonts/Onions-Regular.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
