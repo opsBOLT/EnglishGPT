@@ -27,7 +27,7 @@ const Landing = () => {
           }}
         />
 
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center overflow-hidden">
+        <div className="relative z-10 flex flex-col items-center justify-center overflow-hidden min-h-screen">
           <div className="relative flex w-full scale-y-125 items-center justify-center isolate z-0">
             <motion.div
               initial={{ opacity: 0.5, width: "15rem" }}
