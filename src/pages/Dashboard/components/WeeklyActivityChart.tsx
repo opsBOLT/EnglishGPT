@@ -1,5 +1,5 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp } from 'lucide-react';
+import { AreaChart, Card, Flex, Metric, Text } from '@tremor/react';
 
 interface WeeklyActivityChartProps {
   data: { day: string; hours: number }[];
@@ -8,58 +8,57 @@ interface WeeklyActivityChartProps {
 const WeeklyActivityChart = ({ data }: WeeklyActivityChartProps) => {
   const totalHours = data.reduce((acc, d) => acc + d.hours, 0);
   const avgHours = (totalHours / 7).toFixed(1);
+  const chartData = data.map((d) => ({ day: d.day, Hours: Number(d.hours.toFixed(2)) }));
+  const peak = data.reduce(
+    (current, entry) => (entry.hours > current.hours ? entry : current),
+    data[0] || { day: 'Mon', hours: 0 }
+  );
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-6">
+    <Card className="rounded-3xl border-0 shadow-xl bg-white/90 backdrop-blur">
+      <Flex justifyContent="between" alignItems="start" className="mb-6">
         <div>
-          <h3 className="font-semibold text-gray-900 mb-1">Weekly Activity</h3>
-          <p className="text-sm text-gray-600">{totalHours.toFixed(1)} hours this week</p>
+          <h3 className="font-semibold text-slate-900 mb-1">Weekly Activity</h3>
+          <Text className="text-sm text-slate-600">{totalHours.toFixed(1)} hours this week</Text>
         </div>
-
-        <div className="flex items-center space-x-2 text-green-600 text-sm">
+        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-700 text-sm font-semibold">
           <TrendingUp className="w-4 h-4" />
-          <span className="font-medium">+12% from last week</span>
+          <span>+12% vs last week</span>
         </div>
-      </div>
+      </Flex>
 
       <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data}>
-            <defs>
-              <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3b82f6" stopOpacity={1} />
-                <stop offset="100%" stopColor="#06b6d4" stopOpacity={1} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-            <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} />
-            <YAxis stroke="#9ca3af" fontSize={12} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-              }}
-              formatter={(value: number) => [`${value.toFixed(1)} hours`, 'Study Time']}
-            />
-            <Bar dataKey="hours" fill="url(#barGradient)" radius={[8, 8, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <AreaChart
+          data={chartData}
+          index="day"
+          categories={['Hours']}
+          colors={['violet']}
+          valueFormatter={(value: number) => `${value.toFixed(1)}h`}
+          showLegend={false}
+          showGridLines={false}
+          yAxisWidth={50}
+          className="h-full"
+        />
       </div>
 
-      <div className="flex items-center justify-center space-x-6 mt-4 pt-4 border-t border-gray-100">
-        <button className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg">
-          Week
-        </button>
-        <button className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">
-          Month
-        </button>
-        <button className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">
-          Year
-        </button>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
+        <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+          <Text className="text-xs uppercase tracking-wide text-slate-500">Average per day</Text>
+          <Metric className="text-slate-900">{avgHours}h</Metric>
+          <Text className="text-xs text-slate-500 mt-1">Keep a steady pace</Text>
+        </div>
+        <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+          <Text className="text-xs uppercase tracking-wide text-slate-500">Peak day</Text>
+          <Metric className="text-slate-900">{peak?.day}</Metric>
+          <Text className="text-xs text-slate-500 mt-1">{peak?.hours.toFixed(1)}h logged</Text>
+        </div>
+        <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+          <Text className="text-xs uppercase tracking-wide text-slate-500">Total this week</Text>
+          <Metric className="text-slate-900">{totalHours.toFixed(1)}h</Metric>
+          <Text className="text-xs text-slate-500 mt-1">Stay above your goal</Text>
+        </div>
       </div>
-    </div>
+    </Card>
   );
 };
 

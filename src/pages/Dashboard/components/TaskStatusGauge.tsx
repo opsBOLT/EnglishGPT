@@ -1,5 +1,5 @@
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { CheckCircle2, Clock, Circle } from 'lucide-react';
+import { Card, DonutChart, Flex, Metric, ProgressBar, Text } from '@tremor/react';
 
 interface TaskStatusGaugeProps {
   stats: {
@@ -14,71 +14,69 @@ const TaskStatusGauge = ({ stats }: TaskStatusGaugeProps) => {
 
   const data = [
     { name: 'Completed', value: stats.completed, color: '#10b981' },
-    { name: 'Ongoing', value: stats.ongoing, color: '#3b82f6' },
-    { name: 'Upcoming', value: stats.upcoming, color: '#d1d5db' },
+    { name: 'Ongoing', value: stats.ongoing, color: '#aa80f3' },
+    { name: 'Upcoming', value: stats.upcoming, color: '#cbd5e1' },
   ];
 
   const completionPercentage = total > 0 ? Math.round((stats.completed / total) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 className="font-semibold text-gray-900 mb-6">Task Status</h3>
+    <Card className="rounded-3xl border-0 shadow-xl bg-white/90 backdrop-blur">
+      <Flex justifyContent="between" alignItems="center" className="mb-6">
+        <h3 className="font-semibold text-slate-900">Task Status</h3>
+        <span className="px-3 py-1 rounded-full bg-[#aa80f3]/10 text-[#6f2dd2] text-xs font-semibold">
+          {total} tasks
+        </span>
+      </Flex>
 
-      <div className="relative">
+      <div className="grid grid-cols-2 gap-4 items-center">
         <div className="h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
+          <DonutChart
+            className="h-full"
+            data={data}
+            category="value"
+            index="name"
+            colors={['emerald', 'violet', 'slate']}
+            valueFormatter={(value) => `${value} tasks`}
+          />
         </div>
-
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="space-y-3">
           <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900">{completionPercentage}%</div>
-            <div className="text-sm text-gray-600">Complete</div>
+            <Metric className="text-slate-900">{completionPercentage}%</Metric>
+            <Text className="text-sm text-slate-500">Overall completion</Text>
+          </div>
+          <ProgressBar
+            color="emerald"
+            value={completionPercentage}
+            className="h-3 rounded-full bg-slate-100"
+          />
+
+          <div className="space-y-2 pt-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-slate-700">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span className="text-sm">Completed</span>
+              </div>
+              <span className="text-sm font-semibold text-slate-900">{stats.completed}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-slate-700">
+                <Clock className="w-4 h-4 text-[#aa80f3]" />
+                <span className="text-sm">Ongoing</span>
+              </div>
+              <span className="text-sm font-semibold text-slate-900">{stats.ongoing}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-slate-700">
+                <Circle className="w-4 h-4 text-slate-400" />
+                <span className="text-sm">Upcoming</span>
+              </div>
+              <span className="text-sm font-semibold text-slate-900">{stats.upcoming}</span>
+            </div>
           </div>
         </div>
       </div>
-
-      <div className="space-y-3 mt-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <CheckCircle2 className="w-4 h-4 text-green-500" />
-            <span className="text-sm text-gray-700">Completed</span>
-          </div>
-          <span className="text-sm font-semibold text-gray-900">{stats.completed}</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Clock className="w-4 h-4 text-blue-500" />
-            <span className="text-sm text-gray-700">Ongoing</span>
-          </div>
-          <span className="text-sm font-semibold text-gray-900">{stats.ongoing}</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Circle className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-700">Upcoming</span>
-          </div>
-          <span className="text-sm font-semibold text-gray-900">{stats.upcoming}</span>
-        </div>
-      </div>
-    </div>
+    </Card>
   );
 };
 

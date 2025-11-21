@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { BorderTrail } from "@/components/ui/border-trail";
+import { AnimatedShinyButton } from "@/components/ui/animated-shiny-button";
 
 const Landing = () => {
   return (
@@ -78,7 +79,13 @@ const Landing = () => {
             ></motion.div>
           </div>
 
-          <div className="relative z-50 flex -translate-y-32 flex-col items-center px-5">
+          <div className="relative z-50 flex -translate-y-32 flex-col items-center px-5 space-y-5">
+            <AnimatedShinyButton
+              url="/signup"
+              className="shadow-[0_12px_36px_rgba(170,128,243,0.35)]"
+            >
+              Get Started
+            </AnimatedShinyButton>
             <motion.h1
               initial={{ opacity: 0.5, y: 100 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -97,7 +104,7 @@ const Landing = () => {
 
         {/* Demo Section with Border Trail */}
         <div className="relative z-20 w-full max-w-6xl mx-auto px-8 py-12 -mt-[40vh] md:-mt-[32vh] lg:-mt-[28vh]">
-          <div className="relative w-full h-[600px] bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden">
+          <div className="relative w-full h-[600px] bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-gray-300/60">
             <BorderTrail
               className="bg-gradient-to-r from-purple-500 via-violet-500 to-purple-500"
               size={120}

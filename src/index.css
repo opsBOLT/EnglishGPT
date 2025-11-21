@@ -5,6 +5,8 @@
   font-style: normal;
 }
 
+@import '@tremor/react/dist/esm/tremor.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
