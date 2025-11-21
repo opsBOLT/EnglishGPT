@@ -5,7 +5,7 @@ import { BookOpen, BarChart3, Calendar, Trophy, Clock, Target } from 'lucide-rea
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <LampContainer
         gridProps={{
           width: 30,
