@@ -1,20 +1,18 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LampContainer } from '../../components/ui/lamp';
-import { GridPattern } from '../../components/ui/grid-pattern';
-import { cn } from '../../lib/utils';
 import { BookOpen, BarChart3, Calendar, Trophy, Clock, Target } from 'lucide-react';
 
 const Landing = () => {
   return (
     <div className="min-h-screen bg-white">
-      <LampContainer>
-        <GridPattern
-          width={30}
-          height={30}
-          x={-1}
-          y={-1}
-          squares={[
+      <LampContainer
+        gridProps={{
+          width: 30,
+          height: 30,
+          x: -1,
+          y: -1,
+          squares: [
             [4, 4],
             [5, 1],
             [8, 2],
@@ -35,10 +33,10 @@ const Landing = () => {
             [10, 25],
             [16, 18],
             [20, 22],
-          ]}
-          className="opacity-30"
-        />
-
+          ],
+          className: "opacity-30",
+        }}
+      >
         <motion.h1
           initial={{ opacity: 0.5, y: 100 }}
           whileInView={{ opacity: 1, y: 0 }}
