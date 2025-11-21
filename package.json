@@ -36,6 +36,8 @@
     "@supabase/supabase-js": "^2.57.4",
     "@tabler/core": "^1.4.0",
     "@tremor/react": "^3.18.7",
+    "canvas-confetti": "^1.9.4",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "framer-motion": "^12.23.24",
