@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { BorderTrail } from "../../components/ui/border-trail";
 
 const Landing = () => {
   return (
@@ -92,6 +93,24 @@ const Landing = () => {
               AI IGCSE English
             </motion.h1>
           </div>
+        </div>
+
+        <div className="relative z-20 mt-16 mx-auto max-w-7xl px-6 pb-24">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{
+              delay: 0.5,
+              duration: 0.8,
+              ease: "easeInOut",
+            }}
+            className="relative w-full h-[600px] rounded-3xl bg-white/80 backdrop-blur-sm shadow-2xl overflow-hidden"
+          >
+            <BorderTrail size={80} />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <p className="text-2xl font-medium text-gray-400">Dashboard Demo</p>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>
