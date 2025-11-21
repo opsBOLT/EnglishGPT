@@ -86,8 +86,8 @@ const Landing = () => {
                 duration: 0.8,
                 ease: "easeInOut",
               }}
-              style={{ fontFamily: 'Onions, sans-serif' }}
-              className="mt-8 bg-gradient-to-br from-slate-300 to-slate-500 py-4 bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl"
+              style={{ fontFamily: 'Geist, sans-serif' }}
+              className="mt-8 py-4 text-center text-4xl font-medium tracking-tight text-black md:text-7xl"
             >
               AI IGCSE English
             </motion.h1>
