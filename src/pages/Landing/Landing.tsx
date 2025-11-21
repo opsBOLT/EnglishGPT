@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { BorderTrail } from "@/components/ui/border-trail";
 import { AnimatedShinyButton } from "@/components/ui/animated-shiny-button";
-import { AnimatedShinyHero } from "@/components/ui/animated-shiny-hero";
 import { Navbar1 } from "@/components/ui/navbar-1";
 
 const Landing = () => {
@@ -32,14 +31,8 @@ const Landing = () => {
           }}
         />
 
-        <div className="pointer-events-none absolute inset-x-0 top-[70vh] flex justify-center z-30">
-          <AnimatedShinyHero className="pointer-events-auto shadow-[0_16px_48px_rgba(170,128,243,0.35)] text-sm sm:text-base">
-            The AI that understands. The AI that guides you through IGCSE English
-          </AnimatedShinyHero>
-        </div>
-
         <div className="relative z-10 flex flex-col items-center justify-center overflow-hidden min-h-screen">
-          <div className="relative flex w-full scale-y-125 items-center justify-center isolate z-0 -translate-y-[30%]">
+          <div className="relative flex w-full scale-y-125 items-center justify-center isolate z-0 -translate-y-[45%]">
             <motion.div
               initial={{ opacity: 0.5, width: "15rem" }}
               whileInView={{ opacity: 1, width: "30rem" }}
@@ -89,10 +82,10 @@ const Landing = () => {
             ></motion.div>
           </div>
 
-          <div className="relative z-50 flex -translate-y-32 flex-col items-center px-5 space-y-5">
+          <div className="relative z-50 flex -translate-y-40 flex-col items-center px-5 space-y-5">
             <AnimatedShinyButton
               url="/signup"
-              className="shadow-[0_12px_36px_rgba(170,128,243,0.35)] -translate-y-[20%]"
+              className="shadow-[0_12px_36px_rgba(170,128,243,0.35)] -translate-y-[35%]"
             >
               Get Started
             </AnimatedShinyButton>
@@ -105,10 +98,16 @@ const Landing = () => {
                 ease: "easeInOut",
               }}
               style={{ fontFamily: 'Geist, sans-serif' }}
-              className="mt-8 py-4 text-center text-4xl font-medium tracking-tight text-black md:text-7xl -translate-y-[10%]"
+              className="mt-6 py-4 text-center text-4xl font-medium tracking-tight text-black md:text-7xl -translate-y-[18%]"
             >
               Never Worry About IGCSE English Again
             </motion.h1>
+          </div>
+        </div>
+
+        <div className="pointer-events-none absolute inset-x-0 top-[60vh] flex justify-center z-30">
+          <div className="pointer-events-auto rounded-xl bg-[#aa80f3] text-white px-6 py-3 text-sm sm:text-base font-semibold shadow-[0_16px_48px_rgba(170,128,243,0.35)]">
+            The AI that understands. The AI that guides you through IGCSE English
           </div>
         </div>
 
