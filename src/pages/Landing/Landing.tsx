@@ -32,14 +32,14 @@ const Landing = () => {
           }}
         />
 
-        <div className="pointer-events-none absolute inset-x-0 top-[55vh] flex justify-center z-30">
+        <div className="pointer-events-none absolute inset-x-0 top-[70vh] flex justify-center z-30">
           <AnimatedShinyHero className="pointer-events-auto shadow-[0_16px_48px_rgba(170,128,243,0.35)] text-sm sm:text-base">
             The AI that understands. The AI that guides you through IGCSE English
           </AnimatedShinyHero>
         </div>
 
         <div className="relative z-10 flex flex-col items-center justify-center overflow-hidden min-h-screen">
-          <div className="relative flex w-full scale-y-125 items-center justify-center isolate z-0">
+          <div className="relative flex w-full scale-y-125 items-center justify-center isolate z-0 -translate-y-[30%]">
             <motion.div
               initial={{ opacity: 0.5, width: "15rem" }}
               whileInView={{ opacity: 1, width: "30rem" }}
@@ -92,7 +92,7 @@ const Landing = () => {
           <div className="relative z-50 flex -translate-y-32 flex-col items-center px-5 space-y-5">
             <AnimatedShinyButton
               url="/signup"
-              className="shadow-[0_12px_36px_rgba(170,128,243,0.35)]"
+              className="shadow-[0_12px_36px_rgba(170,128,243,0.35)] -translate-y-[20%]"
             >
               Get Started
             </AnimatedShinyButton>
@@ -105,7 +105,7 @@ const Landing = () => {
                 ease: "easeInOut",
               }}
               style={{ fontFamily: 'Geist, sans-serif' }}
-              className="mt-8 py-4 text-center text-4xl font-medium tracking-tight text-black md:text-7xl"
+              className="mt-8 py-4 text-center text-4xl font-medium tracking-tight text-black md:text-7xl -translate-y-[10%]"
             >
               Never Worry About IGCSE English Again
             </motion.h1>
@@ -114,7 +114,7 @@ const Landing = () => {
 
         {/* Demo Section with Border Trail */}
         <div className="relative z-20 w-full max-w-6xl mx-auto px-8 py-12 -mt-[40vh] md:-mt-[32vh] lg:-mt-[28vh]">
-          <div className="relative w-full h-[600px] bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-gray-300/60">
+          <div className="relative w-full h-[660px] bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-gray-300/60">
             <BorderTrail
               className="bg-gradient-to-r from-purple-500 via-violet-500 to-purple-500"
               size={120}
