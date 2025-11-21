@@ -2,11 +2,14 @@ import { motion } from "framer-motion";
 import { BorderTrail } from "@/components/ui/border-trail";
 import { AnimatedShinyButton } from "@/components/ui/animated-shiny-button";
 import { AnimatedShinyHero } from "@/components/ui/animated-shiny-hero";
+import { Navbar1 } from "@/components/ui/navbar-1";
 
 const Landing = () => {
   return (
     <div className="min-h-screen bg-white outline-none border-none">
       <div className="min-h-screen w-full relative outline-none border-none">
+        <Navbar1 />
+
         <div
           className="absolute inset-0 z-0"
           style={{
@@ -121,10 +124,12 @@ const Landing = () => {
                 ease: "linear",
               }}
             />
-            {/* Placeholder for user dashboard demo */}
-            <div className="relative z-10 w-full h-full flex items-center justify-center">
-              <p className="text-2xl text-gray-400 font-medium">User Dashboard Demo</p>
-            </div>
+            {/* User dashboard demo populated with screenshot */}
+            <img
+              src="/images/dashboard-demo.png"
+              alt="User dashboard preview"
+              className="relative z-10 h-full w-full object-cover"
+            />
           </div>
         </div>
       </div>
