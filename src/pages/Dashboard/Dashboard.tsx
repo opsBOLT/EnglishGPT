@@ -33,6 +33,92 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     if (!user) return;
 
+    const mockSession = {
+      title: 'Literary Devices Sprint',
+      category: 'paper1',
+      scheduled_start: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      duration_minutes: 45,
+    };
+
+    const mockTasks: DailyTask[] = [
+      {
+        id: 'mock-1',
+        study_plan_id: 'mock-plan',
+        day_of_week: 1,
+        category: 'paper1',
+        title: 'Analyze past paper essay',
+        description: 'Read and annotate a high-scoring response.',
+        time_slot: '09:00 AM',
+        duration_minutes: 40,
+        status: 'ongoing',
+        scheduled_date: '',
+      },
+      {
+        id: 'mock-2',
+        study_plan_id: 'mock-plan',
+        day_of_week: 1,
+        category: 'vocabulary',
+        title: 'Vocabulary sprints',
+        description: 'Learn 12 new words with usage examples.',
+        time_slot: '11:30 AM',
+        duration_minutes: 20,
+        status: 'upcoming',
+        scheduled_date: '',
+      },
+      {
+        id: 'mock-3',
+        study_plan_id: 'mock-plan',
+        day_of_week: 1,
+        category: 'text_types',
+        title: 'Write a summary paragraph',
+        description: 'Condense a 500-word article into 120 words.',
+        time_slot: '02:00 PM',
+        duration_minutes: 30,
+        status: 'upcoming',
+        scheduled_date: '',
+      },
+    ];
+
+    const mockProgress: StudentProgress[] = [
+      {
+        id: 'mock-p1',
+        user_id: user.id,
+        category: 'paper1',
+        sections_completed: 6,
+        total_sections: 10,
+        last_accessed: new Date().toISOString(),
+        quiz_average: 78,
+      },
+      {
+        id: 'mock-p2',
+        user_id: user.id,
+        category: 'paper2',
+        sections_completed: 3,
+        total_sections: 10,
+        last_accessed: new Date().toISOString(),
+        quiz_average: 65,
+      },
+      {
+        id: 'mock-p3',
+        user_id: user.id,
+        category: 'vocabulary',
+        sections_completed: 5,
+        total_sections: 10,
+        last_accessed: new Date().toISOString(),
+        quiz_average: 82,
+      },
+    ];
+
+    const mockWeekly = [
+      { day: 'Mon', hours: 1.2 },
+      { day: 'Tue', hours: 0.8 },
+      { day: 'Wed', hours: 1.5 },
+      { day: 'Thu', hours: 1.1 },
+      { day: 'Fri', hours: 0.6 },
+      { day: 'Sat', hours: 0.4 },
+      { day: 'Sun', hours: 0.9 },
+    ];
+
     try {
       const today = new Date().toISOString().split('T')[0];
 
@@ -44,8 +130,10 @@ const Dashboard = () => {
         .eq('status', 'completed');
 
       const totalMinutes = sessions?.reduce((acc, s) => acc + s.duration_minutes, 0) || 0;
-      setTodayStudyTime(Math.round(totalMinutes * 0.8));
-      setTodayBreakTime(Math.round(totalMinutes * 0.2));
+      const activeMinutes = totalMinutes > 0 ? Math.round(totalMinutes * 0.8) : 60;
+      const restMinutes = totalMinutes > 0 ? Math.round(totalMinutes * 0.2) : 20;
+      setTodayStudyTime(activeMinutes);
+      setTodayBreakTime(restMinutes);
 
       const { data: scheduled } = await supabase
         .from('scheduled_sessions')
@@ -57,7 +145,7 @@ const Dashboard = () => {
         .limit(1)
         .maybeSingle();
 
-      setNextSession(scheduled);
+      setNextSession(scheduled || mockSession);
 
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
@@ -83,7 +171,8 @@ const Dashboard = () => {
         };
       });
 
-      setWeeklyActivity(activityByDay);
+      const hasRealActivity = activityByDay.some(item => item.hours > 0);
+      setWeeklyActivity(hasRealActivity ? activityByDay : mockWeekly);
 
       const { data: tasks } = await supabase
         .from('daily_tasks')
@@ -92,9 +181,10 @@ const Dashboard = () => {
         .eq('scheduled_date', today)
         .order('time_slot', { ascending: true });
 
-      setTodayTasks(tasks || []);
+      setTodayTasks(tasks && tasks.length > 0 ? tasks : mockTasks);
 
-      const stats = (tasks || []).reduce(
+      const statsSource = tasks && tasks.length > 0 ? tasks : mockTasks;
+      const stats = statsSource.reduce(
         (acc, task) => {
           acc[task.status]++;
           return acc;
@@ -108,9 +198,17 @@ const Dashboard = () => {
         .select('*')
         .eq('user_id', user.id);
 
-      setModuleProgress(progress || []);
+      setModuleProgress(progress && progress.length > 0 ? progress : mockProgress);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      // Fallback to mock data on error
+      setTodayStudyTime(60);
+      setTodayBreakTime(20);
+      setNextSession(mockSession);
+      setWeeklyActivity(mockWeekly);
+      setTodayTasks(mockTasks);
+      setTaskStats({ completed: 0, ongoing: 1, upcoming: 2 });
+      setModuleProgress(mockProgress);
     } finally {
       setLoading(false);
     }
@@ -128,40 +226,39 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#aa80f3] via-[#b48bff] to-[#6bcafa] text-white shadow-2xl px-6 py-8 sm:px-8">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.18),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.14),transparent_35%)]" />
+        <div className="space-y-6">
+        <div className="relative overflow-hidden rounded-3xl bg-[#aa80f3] text-white shadow-2xl px-6 py-8 sm:px-8">
           <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div className="space-y-3">
-              <p className="text-xs sm:text-sm uppercase tracking-[0.2em] text-white/80">
+              <p className="text-xs sm:text-sm uppercase tracking-[0.2em] text-white/85">
                 Dashboard
               </p>
               <h1 className="text-3xl sm:text-4xl font-semibold">
                 Welcome back, {user?.full_name || 'learner'}
               </h1>
-              <p className="text-white/80 max-w-2xl">
+              <p className="text-white/90 max-w-2xl">
                 Track your sessions, tasks, and progress with a refreshed, focused workspace.
               </p>
             </div>
             <div className="grid grid-cols-3 gap-3 min-w-[260px]">
               <div className="rounded-2xl bg-white/15 border border-white/20 px-4 py-3">
-                <p className="text-xs text-white/70">Weekly hours</p>
+                <p className="text-xs text-white/75">Weekly hours</p>
                 <p className="text-2xl font-semibold">{totalWeeklyHours.toFixed(1)}h</p>
-                <p className="text-xs text-white/70">Avg {avgDailyHours}h/day</p>
+                <p className="text-xs text-white/75">Avg {avgDailyHours}h/day</p>
               </div>
               <div className="rounded-2xl bg-white/15 border border-white/20 px-4 py-3">
-                <p className="text-xs text-white/70">Today</p>
+                <p className="text-xs text-white/75">Today</p>
                 <p className="text-2xl font-semibold">
                   {todaysTotalMinutes > 0 ? `${todaysTotalMinutes.toFixed(0)}m` : '0m'}
                 </p>
-                <p className="text-xs text-white/70">Study + breaks</p>
+                <p className="text-xs text-white/75">Study + breaks</p>
               </div>
               <div className="rounded-2xl bg-white/15 border border-white/20 px-4 py-3">
-                <p className="text-xs text-white/70">Open tasks</p>
+                <p className="text-xs text-white/75">Open tasks</p>
                 <p className="text-2xl font-semibold">
                   {taskStats.ongoing + taskStats.upcoming}
                 </p>
-                <p className="text-xs text-white/70">Waiting in queue</p>
+                <p className="text-xs text-white/75">Waiting in queue</p>
               </div>
             </div>
           </div>

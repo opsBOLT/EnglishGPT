@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { BorderTrail } from "@/components/ui/border-trail";
 import { AnimatedShinyButton } from "@/components/ui/animated-shiny-button";
+import { AnimatedShinyHero } from "@/components/ui/animated-shiny-hero";
 
 const Landing = () => {
   return (
@@ -27,6 +28,12 @@ const Landing = () => {
               "radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%)",
           }}
         />
+
+        <div className="pointer-events-none absolute inset-x-0 top-[55vh] flex justify-center z-30">
+          <AnimatedShinyHero className="pointer-events-auto shadow-[0_16px_48px_rgba(170,128,243,0.35)] text-sm sm:text-base">
+            The AI that understands. The AI that guides you through IGCSE English
+          </AnimatedShinyHero>
+        </div>
 
         <div className="relative z-10 flex flex-col items-center justify-center overflow-hidden min-h-screen">
           <div className="relative flex w-full scale-y-125 items-center justify-center isolate z-0">
@@ -97,7 +104,7 @@ const Landing = () => {
               style={{ fontFamily: 'Geist, sans-serif' }}
               className="mt-8 py-4 text-center text-4xl font-medium tracking-tight text-black md:text-7xl"
             >
-              AI IGCSE English
+              Never Worry About IGCSE English Again
             </motion.h1>
           </div>
         </div>

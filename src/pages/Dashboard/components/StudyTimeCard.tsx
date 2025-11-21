@@ -12,11 +12,10 @@ const StudyTimeCard = ({ activeTime, breakTime }: StudyTimeCardProps) => {
   const activePercentage = total > 0 ? (activeTime / total) * 100 : 0;
 
   return (
-    <Card className="relative overflow-hidden rounded-3xl border-0 bg-gradient-to-br from-white via-[#f4edff] to-[#eef3ff] shadow-xl">
-      <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[#aa80f3]/20 blur-3xl" />
-      <Flex alignItems="start" justifyContent="between" className="relative">
+    <Card className="relative overflow-hidden rounded-3xl border border-[#aa80f3]/10 bg-white shadow-lg p-6 sm:p-7">
+      <Flex alignItems="start" justifyContent="between" className="relative gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-white/70 ring-1 ring-[#aa80f3]/20 shadow">
+          <div className="p-3 rounded-2xl bg-[#aa80f3]/10 ring-1 ring-[#aa80f3]/25 shadow-sm">
             <Clock className="w-5 h-5 text-[#aa80f3]" />
           </div>
           <div>
@@ -30,20 +29,20 @@ const StudyTimeCard = ({ activeTime, breakTime }: StudyTimeCardProps) => {
         </div>
       </Flex>
 
-      <div className="grid grid-cols-2 gap-3 mt-6">
-        <div className="rounded-2xl bg-white/70 border border-white/60 p-4 shadow-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+        <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 shadow-sm space-y-1.5">
           <Text className="text-xs uppercase tracking-wide text-slate-500">Active learning</Text>
-          <p className="text-2xl font-semibold text-slate-900 mt-1">{formatDuration(activeTime)}</p>
-          <p className="text-xs text-slate-500 mt-1">Deep work time</p>
+          <p className="text-2xl font-semibold text-slate-900">{formatDuration(activeTime)}</p>
+          <p className="text-xs text-slate-500">Deep work time</p>
         </div>
-        <div className="rounded-2xl bg-white/70 border border-white/60 p-4 shadow-sm">
+        <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4 shadow-sm space-y-1.5">
           <Text className="text-xs uppercase tracking-wide text-slate-500">Breaks</Text>
-          <p className="text-2xl font-semibold text-slate-900 mt-1">{formatDuration(breakTime)}</p>
-          <p className="text-xs text-slate-500 mt-1">Recharge time</p>
+          <p className="text-2xl font-semibold text-slate-900">{formatDuration(breakTime)}</p>
+          <p className="text-xs text-slate-500">Recharge time</p>
         </div>
       </div>
 
-      <div className="mt-6 space-y-2">
+      <div className="mt-8 space-y-3">
         <Flex justifyContent="between">
           <Text className="text-sm text-slate-600">Active vs breaks</Text>
           <Text className="text-sm font-semibold text-slate-800">
