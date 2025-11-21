@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { BorderTrail } from "@/components/ui/border-trail";
 
 const Landing = () => {
   return (
@@ -91,6 +92,25 @@ const Landing = () => {
             >
               AI IGCSE English
             </motion.h1>
+          </div>
+        </div>
+
+        {/* Demo Section with Border Trail */}
+        <div className="relative z-20 w-full max-w-6xl mx-auto px-8 py-20">
+          <div className="relative w-full h-[600px] bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden">
+            <BorderTrail
+              className="bg-gradient-to-r from-purple-500 via-violet-500 to-purple-500"
+              size={120}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
+            {/* Placeholder for user dashboard demo */}
+            <div className="relative z-10 w-full h-full flex items-center justify-center">
+              <p className="text-2xl text-gray-400 font-medium">User Dashboard Demo</p>
+            </div>
           </div>
         </div>
       </div>
