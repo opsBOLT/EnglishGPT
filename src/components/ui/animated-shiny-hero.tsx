@@ -251,7 +251,7 @@ export function AnimatedShinyHero({
 export default function HeroShinyDemo() {
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <AnimatedShinyHero>The AI that understands. The AI that guides you through IGCSE English</AnimatedShinyHero>
+      <AnimatedShinyHero>IGCSE English Resources, Past Papers, Revision Guides and a Personalised AI Learning Experience</AnimatedShinyHero>
     </div>
   );
 }
