@@ -1,15 +1,13 @@
 import { cn } from "@/lib/utils";
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useMemo, useCallback, createContext, Children } from "react";
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useMemo, useCallback, Children } from "react";
 import { ArrowRight, Mail, Gem, Lock, Eye, EyeOff, ArrowLeft, X, AlertCircle, PartyPopper, Loader } from "lucide-react";
 import { AnimatePresence, motion, useInView, Variants, Transition } from "framer-motion";
 
-import type { ReactNode } from "react"
 import type { GlobalOptions as ConfettiGlobalOptions, CreateTypes as ConfettiInstance, Options as ConfettiOptions } from "canvas-confetti"
 import confetti from "canvas-confetti"
 
 type Api = { fire: (options?: ConfettiOptions) => void }
 export type ConfettiRef = Api | null
-const ConfettiContext = createContext<Api>({} as Api)
 
 const Confetti = forwardRef<ConfettiRef, React.ComponentPropsWithRef<"canvas"> & { options?: ConfettiOptions; globalOptions?: ConfettiGlobalOptions; manualstart?: boolean }>((props, ref) => {
   const { options, globalOptions = { resize: true, useWorker: true }, manualstart = false, ...rest } = props
@@ -20,7 +18,7 @@ const Confetti = forwardRef<ConfettiRef, React.ComponentPropsWithRef<"canvas"> &
       instanceRef.current = confetti.create(node, { ...globalOptions, resize: true })
     } else {
       if (instanceRef.current) {
-        instanceRef.current.reset()
+        instanceRef.current.reset?.()
         instanceRef.current = null
       }
     }
@@ -68,7 +66,9 @@ export function TextLoop({ children, className, interval = 2, transition = { dur
   );
 }
 
-interface BlurFadeProps { children: React.ReactNode; className?: string; variant?: { hidden: { y: number }; visible: { y: number } }; duration?: number; delay?: number; yOffset?: number; inView?: boolean; inViewMargin?: string; blur?: string; }
+type IntersectionMargin = `${number}${"px" | "%"}` | `${number}${"px" | "%"} ${number}${"px" | "%"}` | `${number}${"px" | "%"} ${number}${"px" | "%"} ${number}${"px" | "%"}` | `${number}${"px" | "%"} ${number}${"px" | "%"} ${number}${"px" | "%"} ${number}${"px" | "%"}`;
+
+interface BlurFadeProps { children: React.ReactNode; className?: string; variant?: { hidden: { y: number }; visible: { y: number } }; duration?: number; delay?: number; yOffset?: number; inView?: boolean; inViewMargin?: IntersectionMargin; blur?: string; }
 function BlurFade({ children, className, variant, duration = 0.4, delay = 0, yOffset = 6, inView = true, inViewMargin = "-50px", blur = "6px" }: BlurFadeProps) {
   const ref = useRef(null);
   const inViewResult = useInView(ref, { once: true, margin: inViewMargin });
@@ -139,9 +139,10 @@ interface AuthComponentProps {
   brandName?: string;
   onSignUpSuccess?: () => void;
   onGoogleSignIn?: () => void;
+  onEmailSignUp?: (email: string, password: string) => Promise<{ error?: Error | null } | void>;
 }
 
-export const AuthComponent = ({ logo = <DefaultLogo />, brandName = "EaseMize", onSignUpSuccess, onGoogleSignIn }: AuthComponentProps) => {
+export const AuthComponent = ({ logo = <DefaultLogo />, brandName = "EaseMize", onSignUpSuccess, onGoogleSignIn, onEmailSignUp }: AuthComponentProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -150,6 +151,7 @@ export const AuthComponent = ({ logo = <DefaultLogo />, brandName = "EaseMize", 
   const [authStep, setAuthStep] = useState("email");
   const [modalStatus, setModalStatus] = useState<'closed' | 'loading' | 'error' | 'success'>('closed');
   const [modalErrorMessage, setModalErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const confettiRef = useRef<ConfettiRef>(null);
 
   const isEmailValid = /\S+@\S+\.\S+/.test(email);
@@ -169,26 +171,53 @@ export const AuthComponent = ({ logo = <DefaultLogo />, brandName = "EaseMize", 
     }
   };
 
-  const handleFinalSubmit = (e: React.FormEvent) => {
+  const startSuccessSequence = () => {
+    const loadingStepsCount = modalSteps.length - 1;
+    const totalDuration = loadingStepsCount * TEXT_LOOP_INTERVAL * 1000;
+    setTimeout(() => {
+        fireSideCanons();
+        setModalStatus('success');
+        if (onSignUpSuccess) {
+          setTimeout(() => {
+            onSignUpSuccess();
+          }, 1500);
+        }
+    }, totalDuration);
+  };
+
+  const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (modalStatus !== 'closed' || authStep !== 'confirmPassword') return;
+    if (modalStatus !== 'closed' || authStep !== 'confirmPassword' || isSubmitting) return;
 
     if (password !== confirmPassword) {
         setModalErrorMessage("Passwords do not match!");
         setModalStatus('error');
-    } else {
-        setModalStatus('loading');
-        const loadingStepsCount = modalSteps.length - 1;
-        const totalDuration = loadingStepsCount * TEXT_LOOP_INTERVAL * 1000;
-        setTimeout(() => {
-            fireSideCanons();
-            setModalStatus('success');
-            if (onSignUpSuccess) {
-              setTimeout(() => {
-                onSignUpSuccess();
-              }, 1500);
-            }
-        }, totalDuration);
+    }
+
+    if (password !== confirmPassword) return;
+
+    if (!onEmailSignUp) {
+        setModalErrorMessage('Sign up is unavailable. Please try again later.');
+        setModalStatus('error');
+        return;
+    }
+
+    setIsSubmitting(true);
+    setModalErrorMessage('');
+    setModalStatus('loading');
+
+    try {
+        const result = await onEmailSignUp(email, password);
+        const signUpError = (result as { error?: Error | null } | void)?.error;
+        if (signUpError) throw signUpError;
+
+        startSuccessSequence();
+    } catch (error) {
+        console.error('Sign up error:', error);
+        setModalErrorMessage(error instanceof Error ? error.message : 'Failed to sign up. Please try again.');
+        setModalStatus('error');
+    } finally {
+        setIsSubmitting(false);
     }
   };
 

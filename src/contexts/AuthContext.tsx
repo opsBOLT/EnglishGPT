@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName?: string) => {
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -79,12 +79,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (authError) throw authError;
 
       if (authData.user) {
+        const derivedName = fullName || email.split('@')[0] || 'New User';
         const { error: profileError } = await supabase
           .from('users')
           .insert({
             id: authData.user.id,
             email,
-            full_name: fullName,
+            full_name: derivedName,
             onboarding_completed: false,
           });
 

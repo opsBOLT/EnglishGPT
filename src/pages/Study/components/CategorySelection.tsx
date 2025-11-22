@@ -1,91 +1,24 @@
-import { useState } from 'react';
-import { BookOpen, FileText, Star, List, Book } from 'lucide-react';
-import { useAuth } from '../../../contexts/AuthContext';
-import { supabase } from '../../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
+import { useSessionHistory } from '../../../hooks/useStudyPlatform';
+import { STUDY_CATEGORIES, calculateCategoryProgress } from '../../../config/studyContent';
+import { Clock, TrendingUp, CheckCircle } from 'lucide-react';
 
-interface CategorySelectionProps {
-  selectedCategory: string | null;
-  onStartSession: (sessionId: string) => void;
-}
-
-const CategorySelection = ({ selectedCategory, onStartSession }: CategorySelectionProps) => {
-  const [showDurationModal, setShowDurationModal] = useState(false);
-  const [selectedCat, setSelectedCat] = useState<string | null>(null);
-  const [duration, setDuration] = useState(30);
-  const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+const CategorySelection = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { studySessions, loading } = useSessionHistory(user?.id || '');
 
-  const categories = [
-    {
-      id: 'paper1',
-      title: 'Paper 1 Guide',
-      description: 'Guided literary analysis techniques and strategies',
-      icon: BookOpen,
-      color: 'from-blue-500 to-cyan-500',
-    },
-    {
-      id: 'paper2',
-      title: 'Paper 2 Guide',
-      description: 'Comparative essay writing and analysis',
-      icon: FileText,
-      color: 'from-green-500 to-emerald-500',
-    },
-    {
-      id: 'examples',
-      title: 'High-Level Example Responses',
-      description: 'Study top-scoring student examples with AI guidance',
-      icon: Star,
-      color: 'from-orange-500 to-amber-500',
-    },
-    {
-      id: 'text_types',
-      title: 'Text Types Criteria',
-      description: 'Master different text types and their requirements',
-      icon: List,
-      color: 'from-pink-500 to-rose-500',
-    },
-    {
-      id: 'vocabulary',
-      title: 'Vocabulary Improvement',
-      description: 'Enhance your literary vocabulary and expression',
-      icon: Book,
-      color: 'from-cyan-500 to-teal-500',
-    },
-  ];
-
-  const handleCategoryClick = (catId: string) => {
-    setSelectedCat(catId);
-    setShowDurationModal(true);
+  // Calculate progress for each category
+  const getCompletedSections = (categoryId: string) => {
+    return studySessions
+      .filter(s => s.category === categoryId)
+      .map(s => s.category)
+      .filter((v, i, a) => a.indexOf(v) === i); // unique
   };
 
-  const handleStartSession = async () => {
-    if (!user || !selectedCat) return;
-
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase
-        .from('study_sessions')
-        .insert({
-          user_id: user.id,
-          category: selectedCat,
-          status: 'active',
-          duration_minutes: 0,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      onStartSession(data.id);
-      navigate(`/study?category=${selectedCat}`);
-    } catch (error) {
-      console.error('Error starting session:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleStartSession = (categoryId: string) => {
+    navigate(`/study/session/${encodeURIComponent(categoryId)}`);
   };
 
   return (

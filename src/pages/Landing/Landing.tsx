@@ -1,7 +1,28 @@
 import { Navbar1 } from "@/components/ui/navbar-1";
 import { AuthComponent } from "@/components/ui/sign-up";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Landing = () => {
+  const { signUp, signInWithGoogle } = useAuth();
+  const navigate = useNavigate();
+
+  const handleGoogleSignIn = async () => {
+    const { error } = await signInWithGoogle();
+    if (error) {
+      console.error("Google sign-in error:", error);
+    }
+  };
+
+  const handleSignUpSuccess = () => {
+    navigate("/onboarding");
+  };
+
+  const handleEmailSignUp = async (email: string, password: string) => {
+    const { error } = await signUp(email, password);
+    return { error };
+  };
+
   return (
     <div className="relative min-h-screen bg-white text-foreground overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10">
@@ -23,7 +44,12 @@ const Landing = () => {
             </p>
           </div>
           <div className="mx-auto max-w-4xl overflow-hidden rounded-[32px] border border-[#aa80f3]/20 bg-white/80 backdrop-blur-md shadow-[0_16px_80px_rgba(170,128,243,0.25)]">
-            <AuthComponent brandName="EnglishGPT" />
+            <AuthComponent
+              brandName="EnglishGPT"
+              onGoogleSignIn={handleGoogleSignIn}
+              onSignUpSuccess={handleSignUpSuccess}
+              onEmailSignUp={handleEmailSignUp}
+            />
           </div>
         </div>
       </main>

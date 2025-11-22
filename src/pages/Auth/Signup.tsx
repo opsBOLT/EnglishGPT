@@ -4,7 +4,7 @@ import { BookOpen } from 'lucide-react';
 import { AuthComponent } from '../../components/ui/sign-up';
 
 const Signup = () => {
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, signUp } = useAuth();
   const navigate = useNavigate();
 
   const handleGoogleSignIn = async () => {
@@ -16,6 +16,11 @@ const Signup = () => {
 
   const handleSignUpSuccess = () => {
     navigate('/onboarding');
+  };
+
+  const handleEmailSignUp = async (email: string, password: string) => {
+    const { error } = await signUp(email, password);
+    return { error };
   };
 
   const logo = (
@@ -30,6 +35,7 @@ const Signup = () => {
       brandName="StudyPal"
       onSignUpSuccess={handleSignUpSuccess}
       onGoogleSignIn={handleGoogleSignIn}
+      onEmailSignUp={handleEmailSignUp}
     />
   );
 };

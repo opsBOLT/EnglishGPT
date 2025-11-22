@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { useStudyPlan, useSessionHistory, useAIMemory } from '../../hooks/useStudyPlatform';
 import MainLayout from '../../components/Layout/MainLayout';
 import StudyTimeCard from './components/StudyTimeCard';
 import NextSessionCard from './components/NextSessionCard';
@@ -12,6 +12,12 @@ import { DailyTask, StudentProgress } from '../../types';
 
 const Dashboard = () => {
   const { user } = useAuth();
+
+  // Use our backend hooks
+  const { plan, loading: planLoading } = useStudyPlan(user?.id || '');
+  const { studySessions, practiceSessions, loading: sessionsLoading } = useSessionHistory(user?.id || '');
+  const { groupedMemory, loading: memoryLoading } = useAIMemory(user?.id || '');
+
   const [todayStudyTime, setTodayStudyTime] = useState(0);
   const [todayBreakTime, setTodayBreakTime] = useState(0);
   const [nextSession, setNextSession] = useState<any>(null);
@@ -19,198 +25,131 @@ const Dashboard = () => {
   const [todayTasks, setTodayTasks] = useState<DailyTask[]>([]);
   const [taskStats, setTaskStats] = useState({ completed: 0, ongoing: 0, upcoming: 0 });
   const [moduleProgress, setModuleProgress] = useState<StudentProgress[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const loading = planLoading || sessionsLoading || memoryLoading;
   const totalWeeklyHours = weeklyActivity.reduce((acc, d) => acc + d.hours, 0);
   const avgDailyHours = (totalWeeklyHours / 7).toFixed(1);
   const todaysTotalMinutes = todayStudyTime + todayBreakTime;
 
   useEffect(() => {
-    if (user) {
-      fetchDashboardData();
+    if (user && !loading) {
+      processBackendData();
     }
-  }, [user]);
+  }, [user, studySessions, practiceSessions, plan, loading]);
 
-  const fetchDashboardData = async () => {
-    if (!user) return;
+  const processBackendData = () => {
+    if (!user || !studySessions || !plan) return;
 
-    const mockSession = {
-      title: 'Literary Devices Sprint',
-      category: 'paper1',
-      scheduled_start: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-      duration_minutes: 45,
-    };
+    // Calculate today's study time from real sessions
+    const today = new Date().toISOString().split('T')[0];
+    const todaySessions = studySessions.filter(s =>
+      s.created_at.startsWith(today) && s.duration_minutes
+    );
 
-    const mockTasks: DailyTask[] = [
-      {
-        id: 'mock-1',
-        study_plan_id: 'mock-plan',
-        day_of_week: 1,
-        category: 'paper1',
-        title: 'Analyze past paper essay',
-        description: 'Read and annotate a high-scoring response.',
-        time_slot: '09:00 AM',
-        duration_minutes: 40,
-        status: 'ongoing',
-        scheduled_date: '',
-      },
-      {
-        id: 'mock-2',
-        study_plan_id: 'mock-plan',
-        day_of_week: 1,
-        category: 'vocabulary',
-        title: 'Vocabulary sprints',
-        description: 'Learn 12 new words with usage examples.',
-        time_slot: '11:30 AM',
-        duration_minutes: 20,
-        status: 'upcoming',
-        scheduled_date: '',
-      },
-      {
-        id: 'mock-3',
-        study_plan_id: 'mock-plan',
-        day_of_week: 1,
-        category: 'text_types',
-        title: 'Write a summary paragraph',
-        description: 'Condense a 500-word article into 120 words.',
-        time_slot: '02:00 PM',
-        duration_minutes: 30,
-        status: 'upcoming',
-        scheduled_date: '',
-      },
-    ];
+    const totalMinutes = todaySessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0);
+    const activeMinutes = Math.round(totalMinutes * 0.8);
+    const breakMinutes = Math.round(totalMinutes * 0.2);
+    setTodayStudyTime(activeMinutes);
+    setTodayBreakTime(breakMinutes);
 
-    const mockProgress: StudentProgress[] = [
-      {
-        id: 'mock-p1',
-        user_id: user.id,
-        category: 'paper1',
-        sections_completed: 6,
-        total_sections: 10,
-        last_accessed: new Date().toISOString(),
-        quiz_average: 78,
-      },
-      {
-        id: 'mock-p2',
-        user_id: user.id,
-        category: 'paper2',
-        sections_completed: 3,
-        total_sections: 10,
-        last_accessed: new Date().toISOString(),
-        quiz_average: 65,
-      },
-      {
-        id: 'mock-p3',
-        user_id: user.id,
-        category: 'vocabulary',
-        sections_completed: 5,
-        total_sections: 10,
-        last_accessed: new Date().toISOString(),
-        quiz_average: 82,
-      },
-    ];
+    // Calculate weekly activity from real sessions
+    const activityByDay = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      const dayStr = date.toISOString().split('T')[0];
+      const daySessions = studySessions.filter(s => s.created_at.startsWith(dayStr));
+      const minutes = daySessions.reduce((acc, s) => acc + (s.duration_minutes || 0), 0);
 
-    const mockWeekly = [
-      { day: 'Mon', hours: 1.2 },
-      { day: 'Tue', hours: 0.8 },
-      { day: 'Wed', hours: 1.5 },
-      { day: 'Thu', hours: 1.1 },
-      { day: 'Fri', hours: 0.6 },
-      { day: 'Sat', hours: 0.4 },
-      { day: 'Sun', hours: 0.9 },
-    ];
+      return {
+        day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
+        minutes,
+        hours: Number((minutes / 60).toFixed(1)),
+      };
+    });
+    setWeeklyActivity(activityByDay);
 
-    try {
-      const today = new Date().toISOString().split('T')[0];
+    // Extract today's tasks from study plan
+    if (plan && plan.weeks) {
+      const currentWeek = plan.weeks[0]; // For simplicity, use first week
+      const dayOfWeek = new Date().getDay();
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const todayName = dayNames[dayOfWeek];
 
-      const { data: sessions } = await supabase
-        .from('study_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('start_time', today)
-        .eq('status', 'completed');
+      const todaySchedule = currentWeek?.daily_tasks?.find((d: any) => d.day === todayName);
 
-      const totalMinutes = sessions?.reduce((acc, s) => acc + s.duration_minutes, 0) || 0;
-      const activeMinutes = totalMinutes > 0 ? Math.round(totalMinutes * 0.8) : 60;
-      const restMinutes = totalMinutes > 0 ? Math.round(totalMinutes * 0.2) : 20;
-      setTodayStudyTime(activeMinutes);
-      setTodayBreakTime(restMinutes);
+      if (todaySchedule && todaySchedule.tasks) {
+        const tasks: DailyTask[] = todaySchedule.tasks.map((task: any, idx: number) => ({
+          id: `task-${idx}`,
+          study_plan_id: 'current-plan',
+          day_of_week: dayOfWeek,
+          category: task.category || 'paper1',
+          title: task.title || task.description || 'Study Task',
+          description: task.description || task.title || '',
+          time_slot: '09:00 AM', // You can enhance this based on task data
+          duration_minutes: parseInt(task.duration) || 30,
+          status: idx === 0 ? 'ongoing' : 'upcoming',
+          scheduled_date: today,
+        }));
+        setTodayTasks(tasks);
 
-      const { data: scheduled } = await supabase
-        .from('scheduled_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'scheduled')
-        .gte('scheduled_start', new Date().toISOString())
-        .order('scheduled_start', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        const stats = tasks.reduce(
+          (acc, task) => {
+            acc[task.status]++;
+            return acc;
+          },
+          { completed: 0, ongoing: 0, upcoming: 0 }
+        );
+        setTaskStats(stats);
+      } else {
+        // No tasks for today
+        setTodayTasks([]);
+        setTaskStats({ completed: 0, ongoing: 0, upcoming: 0 });
+      }
+    }
 
-      setNextSession(scheduled || mockSession);
-
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-
-      const { data: weeklySessions } = await supabase
-        .from('study_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('start_time', weekAgo.toISOString())
-        .eq('status', 'completed');
-
-      const activityByDay = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (6 - i));
-        const dayStr = date.toISOString().split('T')[0];
-        const daySessions = weeklySessions?.filter(s => s.start_time.startsWith(dayStr)) || [];
-        const minutes = daySessions.reduce((acc, s) => acc + s.duration_minutes, 0);
-
-        return {
-          day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
-          minutes,
-          hours: minutes / 60,
-        };
-      });
-
-      const hasRealActivity = activityByDay.some(item => item.hours > 0);
-      setWeeklyActivity(hasRealActivity ? activityByDay : mockWeekly);
-
-      const { data: tasks } = await supabase
-        .from('daily_tasks')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('scheduled_date', today)
-        .order('time_slot', { ascending: true });
-
-      setTodayTasks(tasks && tasks.length > 0 ? tasks : mockTasks);
-
-      const statsSource = tasks && tasks.length > 0 ? tasks : mockTasks;
-      const stats = statsSource.reduce(
-        (acc, task) => {
-          acc[task.status]++;
-          return acc;
-        },
-        { completed: 0, ongoing: 0, upcoming: 0 }
+    // Calculate module progress from session history
+    const categories = ['Paper 1 Guide/Revision', 'Paper 2 Guide/Revision', 'Vocabulary Improvement', 'Text Types Criteria', 'High-Level Example Responses'];
+    const progress: StudentProgress[] = categories.map(category => {
+      const categorySessions = studySessions.filter(s => s.category === category);
+      const quizAttempts = categorySessions.filter(s =>
+        (s.quiz_correct || 0) + (s.quiz_incorrect || 0) > 0
       );
-      setTaskStats(stats);
 
-      const { data: progress } = await supabase
-        .from('student_progress')
-        .select('*')
-        .eq('user_id', user.id);
+      const avgQuiz = quizAttempts.length > 0
+        ? Math.round(
+            quizAttempts.reduce((acc, s) => {
+              const total = (s.quiz_correct || 0) + (s.quiz_incorrect || 0);
+              return acc + (total > 0 ? (s.quiz_correct || 0) / total : 0);
+            }, 0) / quizAttempts.length * 100
+          )
+        : 0;
 
-      setModuleProgress(progress && progress.length > 0 ? progress : mockProgress);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      // Fallback to mock data on error
-      setTodayStudyTime(60);
-      setTodayBreakTime(20);
-      setNextSession(mockSession);
-      setWeeklyActivity(mockWeekly);
-      setTodayTasks(mockTasks);
-      setTaskStats({ completed: 0, ongoing: 1, upcoming: 2 });
-      setModuleProgress(mockProgress);
-    } finally {
-      setLoading(false);
+      return {
+        id: category,
+        user_id: user.id,
+        category: category,
+        sections_completed: categorySessions.length,
+        total_sections: 10, // From config
+        last_accessed: categorySessions[0]?.created_at || new Date().toISOString(),
+        quiz_average: avgQuiz,
+      };
+    });
+    setModuleProgress(progress);
+
+    // Get next session from study plan
+    if (plan && plan.weeks && plan.weeks[0]?.daily_tasks) {
+      const nextTask = plan.weeks[0].daily_tasks
+        .flatMap((d: any) => d.tasks || [])
+        .find((t: any) => t);
+
+      if (nextTask) {
+        setNextSession({
+          title: nextTask.title || 'Study Session',
+          category: nextTask.category || 'paper1',
+          scheduled_start: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          duration_minutes: parseInt(nextTask.duration) || 45,
+        });
+      }
     }
   };
 
@@ -275,7 +214,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <TodaysTasks tasks={todayTasks} onRefresh={fetchDashboardData} />
+            <TodaysTasks tasks={todayTasks} onRefresh={() => processBackendData()} />
           </div>
 
           <div className="space-y-6">
