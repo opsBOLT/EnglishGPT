@@ -73,15 +73,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .maybeSingle();
 
       if (error) throw error;
+
       console.log('[AuthContext] User profile fetched:', {
         hasData: !!data,
         userId: data?.id,
         email: data?.email,
         onboarding_completed: data?.onboarding_completed
       });
-      setUser(data);
+
+      // If no profile exists, create one (for Google OAuth users)
+      if (!data) {
+        console.log('[AuthContext] No profile found, creating one for OAuth user');
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+
+        if (authUser) {
+          const { data: newProfile, error: insertError } = await supabase
+            .from('users')
+            .insert({
+              id: authUser.id,
+              email: authUser.email || '',
+              full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'New User',
+              onboarding_completed: false,
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('[AuthContext] Error creating profile for OAuth user:', insertError);
+            throw insertError;
+          }
+
+          console.log('[AuthContext] Created new profile for OAuth user:', newProfile);
+          setUser(newProfile);
+        } else {
+          console.error('[AuthContext] No auth user found when creating profile');
+          setUser(null);
+        }
+      } else {
+        setUser(data);
+      }
     } catch (error) {
       console.error('[AuthContext] Error fetching user profile:', error);
+      setUser(null);
     } finally {
       setLoading(false);
     }
