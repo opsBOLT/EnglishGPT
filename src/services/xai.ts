@@ -7,10 +7,6 @@ const XAI_API_KEY = import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY;
 const XAI_BASE_URL = 'https://api.x.ai/v1';
 const MODEL = 'grok-4-1-fast-non-reasoning';
 
-if (!XAI_API_KEY) {
-  throw new Error('Missing VITE_ENGLISHGPT_GENERAL_API_KEY environment variable');
-}
-
 // Collection IDs from the requirements
 export const COLLECTIONS = {
   PAPER_1: 'collection_6d4eefee-9853-435c-953a-f9a32d564bc6',
@@ -94,6 +90,10 @@ export async function searchDocuments(
     searchType?: 'SEARCH_TYPE_SEMANTIC' | 'SEARCH_TYPE_KEYWORD' | 'SEARCH_TYPE_HYBRID';
   }
 ): Promise<DocumentSearchResponse> {
+  if (!XAI_API_KEY) {
+    throw new Error('Missing VITE_ENGLISHGPT_GENERAL_API_KEY environment variable');
+  }
+
   const request: DocumentSearchRequest = {
     query,
     source: {
@@ -131,6 +131,10 @@ export async function createChatCompletion(
     stream?: boolean;
   }
 ): Promise<ChatCompletionResponse> {
+  if (!XAI_API_KEY) {
+    throw new Error('Missing VITE_ENGLISHGPT_GENERAL_API_KEY environment variable');
+  }
+
   const request: ChatCompletionRequest = {
     messages,
     model: MODEL,
