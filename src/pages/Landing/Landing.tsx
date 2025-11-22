@@ -1,58 +1,138 @@
+import { motion } from "framer-motion";
+import { BorderTrail } from "@/components/ui/border-trail";
+import { AnimatedShinyButton } from "@/components/ui/animated-shiny-button";
+import { AnimatedShinyHero } from "@/components/ui/animated-shiny-hero";
 import { Navbar1 } from "@/components/ui/navbar-1";
-import { AuthComponent } from "@/components/ui/sign-up";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 
 const Landing = () => {
-  const { signUp, signInWithGoogle } = useAuth();
-  const navigate = useNavigate();
-
-  const handleGoogleSignIn = async () => {
-    const { error } = await signInWithGoogle();
-    if (error) {
-      console.error("Google sign-in error:", error);
-    }
-  };
-
-  const handleSignUpSuccess = () => {
-    navigate("/onboarding");
-  };
-
-  const handleEmailSignUp = async (email: string, password: string) => {
-    const { error } = await signUp(email, password);
-    return { error };
-  };
-
   return (
-    <div className="relative min-h-screen bg-white text-foreground overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -left-36 -top-24 h-96 w-96 rounded-full bg-[radial-gradient(circle_at_center,rgba(170,128,243,0.45),transparent_55%)] blur-3xl" />
-        <div className="absolute right-0 top-12 h-[28rem] w-[28rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(170,128,243,0.3),transparent_52%)] blur-2xl" />
-        <div className="absolute left-1/2 bottom-[-8rem] h-[22rem] w-[22rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(170,128,243,0.28),transparent_60%)] blur-[120px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(125%_125%_at_50%_10%,#ffffff_25%,rgba(170,128,243,0.12)_65%,transparent_100%)]" />
-      </div>
+    <div className="min-h-screen bg-white outline-none border-none">
+      <div className="min-h-screen w-full relative outline-none border-none">
+        <Navbar1 />
 
-      <Navbar1 />
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            background: "radial-gradient(125% 125% at 50% 10%, #fff 40%, #7c3aed 100%)",
+          }}
+        />
 
-      <main className="relative z-10 flex items-center justify-center px-4 py-16 md:py-24">
-        <div className="w-full max-w-6xl">
-          <div className="mb-10 text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7b5ad6]">Sign up</p>
-            <h1 className="mt-3 text-4xl md:text-5xl font-semibold tracking-tight text-black">Join EnglishGPT today</h1>
-            <p className="mt-3 text-base text-muted-foreground">
-              Continue with Google to create your account and get instant access to the IGCSE English co-pilot.
-            </p>
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, #e2e8f0 1px, transparent 1px),
+              linear-gradient(to bottom, #e2e8f0 1px, transparent 1px)
+            `,
+            backgroundSize: "20px 30px",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%)",
+            maskImage:
+              "radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%)",
+          }}
+        />
+
+        <div className="pointer-events-none absolute inset-x-0 top-[70vh] flex justify-center z-30">
+          <AnimatedShinyHero className="pointer-events-auto shadow-[0_16px_48px_rgba(170,128,243,0.35)] text-sm sm:text-base">
+            The AI that understands. The AI that guides you through IGCSE English
+          </AnimatedShinyHero>
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center justify-center overflow-hidden min-h-screen">
+          <div className="relative flex w-full scale-y-125 items-center justify-center isolate z-0 -translate-y-[30%]">
+            <motion.div
+              initial={{ opacity: 0.5, width: "15rem" }}
+              whileInView={{ opacity: 1, width: "30rem" }}
+              transition={{
+                delay: 0.3,
+                duration: 0.8,
+                ease: "easeInOut",
+              }}
+              style={{
+                backgroundImage: `conic-gradient(var(--conic-position), var(--tw-gradient-stops))`,
+              }}
+              className="absolute inset-auto right-1/2 h-56 overflow-visible w-[30rem] bg-gradient-conic from-purple-300 via-transparent to-transparent [--conic-position:from_70deg_at_center_top]"
+            />
+            <motion.div
+              initial={{ opacity: 0.5, width: "15rem" }}
+              whileInView={{ opacity: 1, width: "30rem" }}
+              transition={{
+                delay: 0.3,
+                duration: 0.8,
+                ease: "easeInOut",
+              }}
+              style={{
+                backgroundImage: `conic-gradient(var(--conic-position), var(--tw-gradient-stops))`,
+              }}
+              className="absolute inset-auto left-1/2 h-56 w-[30rem] bg-gradient-conic from-transparent via-transparent to-purple-300 [--conic-position:from_290deg_at_center_top]"
+            />
+            <div className="absolute inset-auto z-50 h-36 w-[28rem] -translate-y-1/2 rounded-full bg-purple-300 opacity-40 blur-3xl"></div>
+            <motion.div
+              initial={{ width: "8rem" }}
+              whileInView={{ width: "16rem" }}
+              transition={{
+                delay: 0.3,
+                duration: 0.8,
+                ease: "easeInOut",
+              }}
+              className="absolute inset-auto z-30 h-36 w-64 -translate-y-[6rem] rounded-full bg-purple-300 blur-2xl"
+            ></motion.div>
+            <motion.div
+              initial={{ width: "15rem" }}
+              whileInView={{ width: "30rem" }}
+              transition={{
+                delay: 0.3,
+                duration: 0.8,
+                ease: "easeInOut",
+              }}
+              className="absolute inset-auto z-50 h-0.5 w-[30rem] -translate-y-[7rem] bg-purple-300"
+            ></motion.div>
           </div>
-          <div className="mx-auto max-w-4xl overflow-hidden rounded-[32px] border border-[#aa80f3]/20 bg-white/80 backdrop-blur-md shadow-[0_16px_80px_rgba(170,128,243,0.25)]">
-            <AuthComponent
-              brandName="EnglishGPT"
-              onGoogleSignIn={handleGoogleSignIn}
-              onSignUpSuccess={handleSignUpSuccess}
-              onEmailSignUp={handleEmailSignUp}
+
+          <div className="relative z-50 flex -translate-y-32 flex-col items-center px-5 space-y-5">
+            <AnimatedShinyButton
+              url="/signup"
+              className="shadow-[0_12px_36px_rgba(170,128,243,0.35)] -translate-y-[20%]"
+            >
+              Get Started
+            </AnimatedShinyButton>
+            <motion.h1
+              initial={{ opacity: 0.5, y: 100 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{
+                delay: 0.3,
+                duration: 0.8,
+                ease: "easeInOut",
+              }}
+              style={{ fontFamily: 'Geist, sans-serif' }}
+              className="mt-8 py-4 text-center text-4xl font-medium tracking-tight text-black md:text-7xl -translate-y-[10%]"
+            >
+              Never Worry About IGCSE English Again
+            </motion.h1>
+          </div>
+        </div>
+
+        {/* Demo Section with Border Trail */}
+        <div className="relative z-20 w-full max-w-6xl mx-auto px-8 py-12 -mt-[40vh] md:-mt-[32vh] lg:-mt-[28vh]">
+          <div className="relative w-full h-[730px] bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-gray-300/60">
+            <BorderTrail
+              className="bg-gradient-to-r from-purple-500 via-violet-500 to-purple-500"
+              size={120}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
+            {/* User dashboard demo populated with screenshot */}
+            <img
+              src="/images/dashboard-demo.png"
+              alt="User dashboard preview"
+              className="relative z-10 h-full w-full object-cover"
             />
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
