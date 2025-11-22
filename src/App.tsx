@@ -24,7 +24,7 @@ function App() {
             path="/onboarding"
             element={
               <ProtectedRoute requireOnboarding={false}>
-                <OnboardingWithAuth />
+                <Onboarding />
               </ProtectedRoute>
             }
           />
@@ -100,11 +100,6 @@ function App() {
 }
 
 // Wrapper components to pass auth user to pages
-function OnboardingWithAuth() {
-  const { user } = useAuth();
-  return <Onboarding userId={user?.id || ''} />;
-}
-
 function StudySessionWithAuth() {
   const { user } = useAuth();
   return <StudySession userId={user?.id || ''} />;
