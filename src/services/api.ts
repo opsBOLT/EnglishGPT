@@ -452,8 +452,16 @@ export async function getStudySessions(userId: string, limit = 10): Promise<{ se
 
     return { sessions: data };
   } catch (error) {
-    console.error('Error fetching study sessions:', error);
-    return { error: (error as Error).message };
+    const message = (error as Error).message || '';
+    const missingTable = message.includes("Could not find the table 'public.study_sessions'") ||
+      message.toLowerCase().includes('relation "study_sessions" does not exist');
+
+    const friendlyMessage = missingTable
+      ? 'Supabase table study_sessions is missing. Run the migrations to create it.'
+      : message;
+
+    console.error('Error fetching study sessions:', friendlyMessage);
+    return { sessions: [], error: friendlyMessage };
   }
 }
 
@@ -473,7 +481,15 @@ export async function getPracticeSessions(userId: string, limit = 10): Promise<{
 
     return { sessions: data };
   } catch (error) {
-    console.error('Error fetching practice sessions:', error);
-    return { error: (error as Error).message };
+    const message = (error as Error).message || '';
+    const missingTable = message.includes("Could not find the table 'public.practice_sessions'") ||
+      message.toLowerCase().includes('relation "practice_sessions" does not exist');
+
+    const friendlyMessage = missingTable
+      ? 'Supabase table practice_sessions is missing. Run the migrations to create it.'
+      : message;
+
+    console.error('Error fetching practice sessions:', friendlyMessage);
+    return { sessions: [], error: friendlyMessage };
   }
 }

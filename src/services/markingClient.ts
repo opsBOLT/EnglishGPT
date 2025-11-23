@@ -35,12 +35,19 @@ export type EvaluateResult = {
 };
 
 const API_URL = import.meta.env.VITE_ENGLISHGPT_API_URL || 'https://englishgpt.everythingenglish.xyz';
-const X_API_KEY = import.meta.env.X_API_KEY;
+const X_API_KEY =
+  import.meta.env.X_API_KEY ||
+  import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY ||
+  import.meta.env.VITE_ENGLISHGPT_API_KEY;
 
 export async function evaluateEssayPublic(params: EvaluateParams): Promise<EvaluateResult> {
   if (!X_API_KEY) {
-    console.error('[markingClient] Missing X_API_KEY; cannot call marking API.');
-    throw new Error('Missing marking API x-api-key');
+    console.error('[markingClient] Missing marking API key; set X_API_KEY or VITE_ENGLISHGPT_GENERAL_API_KEY.', {
+      has_X_API_KEY: !!import.meta.env.X_API_KEY,
+      has_VITE_ENGLISHGPT_GENERAL_API_KEY: !!import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY,
+      has_VITE_ENGLISHGPT_API_KEY: !!import.meta.env.VITE_ENGLISHGPT_API_KEY,
+    });
+    throw new Error('Missing marking API key');
   }
 
   const url = `${API_URL.replace(/\/$/, '')}/api/public/evaluate`;
