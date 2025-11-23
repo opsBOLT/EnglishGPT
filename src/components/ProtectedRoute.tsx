@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children, requireOnboarding = true }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
-x 
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
