@@ -31,9 +31,13 @@
 }
 
 /* Apply Sulphur Point as default font */
-body {
+html, body {
   font-family: "Sulphur Point", sans-serif;
   font-weight: 400;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
 }
 
 * {

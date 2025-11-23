@@ -200,10 +200,10 @@ const Onboarding = () => {
             {/* Progress */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-white/60 sulphur-point-regular">
+                <span className="text-sm font-medium sulphur-point-regular" style={{ color: '#6a0bbd' }}>
                   Step {currentStep} of {totalSteps}
                 </span>
-                <span className="text-sm font-medium text-white/60 sulphur-point-regular">
+                <span className="text-sm font-medium sulphur-point-regular" style={{ color: '#6a0bbd' }}>
                   {Math.round((currentStep / totalSteps) * 100)}%
                 </span>
               </div>
@@ -227,11 +227,14 @@ const Onboarding = () => {
 
             {/* Question */}
             <div className="space-y-4">
-              <h1 className="text-5xl font-bold text-white sulphur-point-bold leading-tight">
+              <h1
+                className="text-5xl font-bold sulphur-point-bold leading-tight"
+                style={{ color: '#2b0c44' }}
+              >
                 {content?.question}
               </h1>
               {content?.subtitle && (
-                <p className="text-xl text-white/60 sulphur-point-regular">
+                <p className="text-xl sulphur-point-regular" style={{ color: '#6a0bbd' }}>
                   {content.subtitle}
                 </p>
               )}
