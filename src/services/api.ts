@@ -87,7 +87,9 @@ export async function getStudyPlan(userId: string): Promise<{ plan?: any; error?
       .from('study_plan')
       .select('plan_data')
       .eq('user_id', userId)
-      .single();
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (error) throw error;
 
