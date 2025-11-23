@@ -274,7 +274,12 @@ const Onboarding = () => {
                       >
                         {option.value}.
                       </span>
-                      <span className="text-white text-lg sulphur-point-regular group-hover:text-white/90 transition-colors duration-300">
+                      <span
+                        className="text-lg sulphur-point-regular group-hover:text-white/90 transition-colors duration-300"
+                        style={{
+                          color: formData[content.field as keyof OnboardingData] === option.value ? '#ffffff' : '#2b0c44',
+                        }}
+                      >
                         {option.label}
                       </span>
                     </div>
@@ -305,7 +310,12 @@ const Onboarding = () => {
                       animation: 'fadeInUp 0.5s ease-out backwards',
                     }}
                   >
-                    <span className="text-white text-lg sulphur-point-regular">
+                    <span
+                      className="text-lg sulphur-point-regular transition-colors duration-300"
+                      style={{
+                        color: formData.examStruggles.includes(option) ? '#ffffff' : '#2b0c44',
+                      }}
+                    >
                       {option}
                     </span>
                   </button>
