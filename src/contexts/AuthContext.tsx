@@ -76,12 +76,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (authUser) {
           const { data: newProfile, error: insertError } = await supabase
             .from('users')
-            .insert({
-              id: authUser.id,
-              email: authUser.email || '',
-              full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'New User',
-              onboarding_completed: false,
-            })
+            .upsert(
+              {
+                id: authUser.id,
+                email: authUser.email || '',
+                full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'New User',
+                onboarding_completed: false,
+              },
+              { onConflict: 'id' }
+            )
             .select()
             .single();
 
@@ -109,21 +112,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (authError) throw authError;
-
-      if (authData.user) {
-        const derivedName = fullName || email.split('@')[0] || 'New User';
-
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: authData.user.id,
-            email,
-            full_name: derivedName,
-            onboarding_completed: false,
-          });
-
-        if (profileError) throw profileError;
-      }
 
       return { error: null };
     } catch (error) {
