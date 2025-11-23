@@ -11,6 +11,8 @@ interface OnboardingData {
   analysisSkill: 'A' | 'B' | 'C' | 'D' | '';
   examStruggles: string[];
   difficultyExplanation: string;
+  weaknessQuestionType: string;
+  weaknessEssay: string;
 }
 
 const Onboarding = () => {
@@ -26,6 +28,8 @@ const Onboarding = () => {
     analysisSkill: '',
     examStruggles: [],
     difficultyExplanation: '',
+    weaknessQuestionType: '',
+    weaknessEssay: '',
   });
 
   const totalSteps = 5;
@@ -93,7 +97,7 @@ const Onboarding = () => {
     section: string;
     question: string;
     subtitle?: string;
-    type: 'single' | 'multiple' | 'text';
+    type: 'single' | 'multiple' | 'text' | 'essay';
     field: string;
     options?: { value: string; label: string }[] | string[];
     placeholder?: string;
@@ -160,11 +164,14 @@ const Onboarding = () => {
       case 5:
         return {
           section: 'Section 2: Specific Paper Weaknesses',
-          question: 'If you know why you struggle with any of those questions, what\'s the reason?',
-          subtitle: 'Explain in one or two sentences why these questions feel difficult',
-          type: 'text',
-          field: 'difficultyExplanation',
-          placeholder: 'For example: "I never know how to start my answer for Q2d" or "I run out of time on Q3 because I write too slowly"',
+          question: 'Share a short response for the question type you struggle with most.',
+          subtitle: 'Pick the weakest question type from Q4 and paste your essay/response so we can mark it automatically.',
+          type: 'essay',
+          field: 'weaknessEssay',
+          options: formData.examStruggles.length
+            ? formData.examStruggles
+            : ['Pick a question type in the previous step to select it here'],
+          placeholder: 'Paste your essay/response here (a short paragraph is fine).',
         };
       default:
         return null;
@@ -323,6 +330,64 @@ const Onboarding = () => {
                     </span>
                   </button>
                 ))}
+              </div>
+            )}
+
+            {content?.type === 'essay' && (
+              <div className="space-y-4" style={{ animation: 'fadeInUp 0.5s ease-out backwards' }}>
+                <div className="space-y-2">
+                  <label className="text-base sulphur-point-bold" style={{ color: '#2b0c44' }}>
+                    Which question type is this essay for?
+                  </label>
+                  <select
+                    value={formData.weaknessQuestionType}
+                    onChange={(e) => setFormData({ ...formData, weaknessQuestionType: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl sulphur-point-regular text-base"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                      color: '#2b0c44',
+                      border: '2px solid #aa08f3',
+                      backdropFilter: 'blur(8px)',
+                    }}
+                    disabled={!formData.examStruggles.length}
+                  >
+                    {!formData.examStruggles.length ? (
+                      <option value="">Select a question type in Step 4 first</option>
+                    ) : (
+                      <>
+                        <option value="">Select one</option>
+                        {formData.examStruggles.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <textarea
+                    value={formData.weaknessEssay}
+                    onChange={(e) => setFormData({ ...formData, weaknessEssay: e.target.value })}
+                    rows={10}
+                    className="w-full px-6 py-4 rounded-2xl text-white text-lg sulphur-point-regular transition-all duration-300 focus:scale-105"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: '2px solid rgba(255, 255, 255, 0.1)',
+                      backdropFilter: 'blur(10px)',
+                    }}
+                    placeholder={content.placeholder}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#aa08f3';
+                      e.target.style.backgroundColor = 'rgba(170, 8, 243, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                      e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                    }}
+                  />
+                </div>
               </div>
             )}
 
