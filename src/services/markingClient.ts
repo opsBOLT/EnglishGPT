@@ -9,11 +9,21 @@ type EvaluateParams = {
 };
 
 export type EvaluateResult = {
-  feedback?: string;
-  grade?: string;
-  improvement_suggestions?: string[];
-  strengths?: string[];
-  next_steps?: string[];
+  id: string;
+  user_id: string;
+  question_type: string;
+  student_response: string;
+  timestamp: string;
+  full_chat: string | null;
+  text_type?: string | null;
+  marking_scheme?: string | null;
+  total_score?: number | null;
+  max_score?: number | null;
+  feedback: string;
+  grade: string;
+  improvement_suggestions: string[];
+  strengths: string[];
+  next_steps: string[];
   content_structure_marks?: number | string | null;
   style_accuracy_marks?: number | string | null;
   reading_marks?: number | string | null;
@@ -25,14 +35,9 @@ export type EvaluateResult = {
 };
 
 const API_URL = import.meta.env.VITE_ENGLISHGPT_API_URL || 'https://englishgpt.everythingenglish.xyz';
-const API_KEY = import.meta.env.VITE_ENGLISHGPT_API_KEY;
 const X_API_KEY = import.meta.env.X_API_KEY;
 
 export async function evaluateEssayPublic(params: EvaluateParams): Promise<EvaluateResult> {
-  if (!API_KEY) {
-    console.error('[markingClient] Missing VITE_ENGLISHGPT_API_KEY; cannot call marking API.');
-    throw new Error('Missing marking API key');
-  }
   if (!X_API_KEY) {
     console.error('[markingClient] Missing X_API_KEY; cannot call marking API.');
     throw new Error('Missing marking API x-api-key');
@@ -56,7 +61,6 @@ export async function evaluateEssayPublic(params: EvaluateParams): Promise<Evalu
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${API_KEY}`,
       'x-api-key': X_API_KEY,
     },
     body: JSON.stringify(payload),
