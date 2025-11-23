@@ -35,6 +35,11 @@ if (!API_KEY) {
 
 export async function callEvaluateEndpoint(body: EvaluateRequest): Promise<EvaluateResponse> {
   const url = `${API_URL.replace(/\/$/, '')}/api/public/evaluate`;
+  console.debug('[markingApiClient] evaluate: url', url);
+  console.debug('[markingApiClient] evaluate: payload', {
+    ...body,
+    student_response: body.student_response.slice(0, 200) + (body.student_response.length > 200 ? '...[truncated]' : ''),
+  });
 
   const resp = await fetch(url, {
     method: 'POST',
@@ -45,10 +50,15 @@ export async function callEvaluateEndpoint(body: EvaluateRequest): Promise<Evalu
     body: JSON.stringify(body),
   });
 
+  console.debug('[markingApiClient] evaluate: status', resp.status);
+
   if (!resp.ok) {
     const text = await resp.text().catch(() => '');
+    console.error('[markingApiClient] evaluate: error body', text);
     throw new Error(`Marking API error ${resp.status}: ${text || resp.statusText}`);
   }
 
-  return resp.json() as Promise<EvaluateResponse>;
+  const json = (await resp.json()) as EvaluateResponse;
+  console.debug('[markingApiClient] evaluate: response', json);
+  return json;
 }

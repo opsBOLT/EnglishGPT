@@ -30,10 +30,21 @@ const mapMarksToComponents = (
   apiResp: EvaluateResponse,
 ): MarkScore[] => {
   const componentEntries = Object.entries(totals.components);
+  console.debug('[evaluationService] mapping components', {
+    totals,
+    apiRespKeys: Object.keys(apiResp || {}),
+  });
 
   return componentEntries.map(([component, maxScore]) => {
     const fieldName = `${component}_marks` as keyof EvaluateResponse;
     const value = apiResp[fieldName];
+    console.debug('[evaluationService] component score', {
+      component,
+      fieldName,
+      value,
+      maxScore,
+      weight: maxScore / totals.total,
+    });
 
     return {
       criterionId: component,
@@ -50,9 +61,21 @@ export const evaluateEssay = async (params: {
   questionType: string;
   essay: string;
 }): Promise<EvaluationResult> => {
+  console.debug('[evaluationService] evaluateEssay start', {
+    questionType: params.questionType,
+    essayPreview: params.essay.slice(0, 200) + (params.essay.length > 200 ? '...[truncated]' : ''),
+  });
+
   const question = getQuestionType(params.questionType);
   const totals = getQuestionTotals(params.questionType);
   const guide = getMarkingGuide(params.questionType);
+
+  console.debug('[evaluationService] lookup config', {
+    hasQuestion: !!question,
+    hasTotals: !!totals,
+    hasGuide: !!guide,
+    totals,
+  });
 
   if (!question || !totals) {
     throw new Error(`No marking config found for question type: ${params.questionType}`);
@@ -68,11 +91,19 @@ export const evaluateEssay = async (params: {
     user_id: 'public-api',
   });
 
+  console.debug('[evaluationService] apiResponse received', {
+    feedbackPreview: apiResponse.feedback?.slice(0, 200),
+    grade: apiResponse.grade,
+    keys: Object.keys(apiResponse || {}),
+  });
+
   const scores = mapMarksToComponents(totals, apiResponse);
 
   const totalMax = totals.total;
   const total = scores.reduce((sum, s) => sum + s.score, 0);
   const weightedScore = scores.reduce((sum, s) => sum + s.score * s.weight, 0);
+
+  console.debug('[evaluationService] computed totals', { total, totalMax, weightedScore });
 
   return {
     questionType: params.questionType,

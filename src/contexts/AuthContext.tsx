@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseMissingEnv } from '../lib/supabase';
 import { User } from '../types';
 
 interface AuthContextType {
@@ -32,6 +32,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     console.log('[AuthContext] Initializing auth state');
 
+    if (supabaseMissingEnv) {
+      console.error('[AuthContext] Supabase env missing. Auth disabled until VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.');
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('[AuthContext] Initial session check:', {
         hasSession: !!session,
@@ -43,6 +49,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setLoading(false);
       }
+    }).catch((error) => {
+      console.error('[AuthContext] getSession failed:', error);
+      setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {

@@ -14,9 +14,9 @@ const Dashboard = () => {
   const { user } = useAuth();
 
   // Use our backend hooks
-  const { plan, loading: planLoading } = useStudyPlan(user?.id || '');
-  const { studySessions, practiceSessions, loading: sessionsLoading } = useSessionHistory(user?.id || '');
-  const { groupedMemory, loading: memoryLoading } = useAIMemory(user?.id || '');
+  const { plan, loading: planLoading, error: planError } = useStudyPlan(user?.id || '');
+  const { studySessions, practiceSessions, loading: sessionsLoading, error: sessionsError } = useSessionHistory(user?.id || '');
+  const { groupedMemory, loading: memoryLoading, error: memoryError } = useAIMemory(user?.id || '');
 
   const [todayStudyTime, setTodayStudyTime] = useState(0);
   const [todayBreakTime, setTodayBreakTime] = useState(0);
@@ -165,6 +165,14 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
+        {(planError || sessionsError || memoryError) && (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+            <p className="font-semibold">Some data couldn’t load from Supabase.</p>
+            <p className="text-sm">
+              {planError || sessionsError || memoryError}
+            </p>
+          </div>
+        )}
         <div className="space-y-6">
         <div className="relative overflow-hidden rounded-3xl bg-[#aa80f3] text-white shadow-2xl px-6 py-8 sm:px-8">
           <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">

@@ -79,6 +79,8 @@ export function useStudyPlan(userId: string) {
 
     if (result.error) {
       setError(result.error);
+      // Provide an empty plan shape so downstream UI can still render without crashing
+      setPlan({ weeks: [] });
     } else {
       setPlan(result.plan);
     }
@@ -330,6 +332,9 @@ export function useSessionHistory(userId: string) {
 
     if (studyResult.error || practiceResult.error) {
       setError(studyResult.error || practiceResult.error || 'Failed to fetch history');
+      // Fall back to empty arrays so UI can render placeholders
+      setStudySessions([]);
+      setPracticeSessions([]);
     } else {
       setStudySessions(studyResult.sessions || []);
       setPracticeSessions(practiceResult.sessions || []);

@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { PixelAnimation } from '../../components/PixelAnimation';
+import { evaluateEssayPublic } from '../../services/markingClient';
 
 interface OnboardingData {
   readingSkill: 'A' | 'B' | 'C' | 'D' | '';
@@ -54,6 +55,26 @@ const Onboarding = () => {
     setLoading(true);
 
     try {
+      let markingResult = null;
+
+      if (formData.weaknessQuestionType && formData.weaknessEssay) {
+        console.debug('[Onboarding] Running marking for Q5', {
+          questionType: formData.weaknessQuestionType,
+          essayPreview: `${formData.weaknessEssay.slice(0, 120)}${formData.weaknessEssay.length > 120 ? '...[truncated]' : ''}`,
+        });
+        try {
+          markingResult = await evaluateEssayPublic({
+            questionType: formData.weaknessQuestionType,
+            essay: formData.weaknessEssay,
+          });
+          console.debug('[Onboarding] Marking result', markingResult);
+        } catch (err) {
+          console.error('[Onboarding] Marking call failed', err);
+        }
+      } else {
+        console.debug('[Onboarding] Skipping marking; missing question type or essay');
+      }
+
       const { error } = await supabase.from('onboarding_responses').insert({
         user_id: user.id,
         reading_skill: formData.readingSkill,
@@ -61,11 +82,17 @@ const Onboarding = () => {
         analysis_skill: formData.analysisSkill,
         exam_struggles: formData.examStruggles,
         difficulty_explanation: formData.difficultyExplanation,
+        // TODO: Persist markingResult to a dedicated table when backend is ready
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Onboarding] Error saving onboarding response', error);
+        throw error;
+      }
+      console.debug('[Onboarding] Onboarding response saved');
 
       await updateProfile({ onboarding_completed: true });
+      console.debug('[Onboarding] Profile updated to onboarding_completed');
 
       const progressCategories = ['paper1', 'paper2', 'examples', 'text_types', 'vocabulary'];
       const progressInserts = progressCategories.map(category => ({
@@ -76,7 +103,12 @@ const Onboarding = () => {
         quiz_average: 0,
       }));
 
-      await supabase.from('student_progress').insert(progressInserts);
+      const { error: progressError } = await supabase.from('student_progress').insert(progressInserts);
+      if (progressError) {
+        console.error('[Onboarding] Error seeding student_progress', progressError);
+      } else {
+        console.debug('[Onboarding] Seeded student_progress rows');
+      }
 
       navigate('/dashboard');
     } catch (error) {
