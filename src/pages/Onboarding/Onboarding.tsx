@@ -3,47 +3,43 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { PixelAnimation } from '../../components/PixelAnimation';
 
 interface OnboardingData {
-  readingSkill: number;
-  writingSkill: number;
-  analysisSkill: number;
+  readingSkill: 'A' | 'B' | 'C' | 'D' | '';
+  writingSkill: 'A' | 'B' | 'C' | 'D' | '';
+  analysisSkill: 'A' | 'B' | 'C' | 'D' | '';
   examStruggles: string[];
   difficultyExplanation: string;
-  studyMethods: string[];
-  studyTimeAvailability: string;
-  planPreference: string;
-  stressLevel: number;
 }
 
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
   const { user, updateProfile } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState<OnboardingData>({
-    readingSkill: 3,
-    writingSkill: 3,
-    analysisSkill: 3,
+    readingSkill: '',
+    writingSkill: '',
+    analysisSkill: '',
     examStruggles: [],
     difficultyExplanation: '',
-    studyMethods: [],
-    studyTimeAvailability: '',
-    planPreference: '',
-    stressLevel: 3,
   });
 
-  const totalSteps = 10;
+  const totalSteps = 5;
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
+      setDirection('forward');
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
+      setDirection('backward');
       setCurrentStep(currentStep - 1);
     }
   };
@@ -61,10 +57,6 @@ const Onboarding = () => {
         analysis_skill: formData.analysisSkill,
         exam_struggles: formData.examStruggles,
         difficulty_explanation: formData.difficultyExplanation,
-        study_methods: formData.studyMethods,
-        study_time_availability: formData.studyTimeAvailability,
-        plan_preference: formData.planPreference,
-        stress_level: formData.stressLevel,
       });
 
       if (error) throw error;
@@ -97,387 +89,339 @@ const Onboarding = () => {
     return [...array, item];
   };
 
-  const renderStep = () => {
+  const getQuestionContent = (): {
+    section: string;
+    question: string;
+    subtitle?: string;
+    type: 'single' | 'multiple' | 'text';
+    field: string;
+    options?: { value: string; label: string }[] | string[];
+    placeholder?: string;
+  } | null => {
     switch (currentStep) {
       case 1:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              How confident are you with your reading skills?
-            </h2>
-            <p className="text-gray-600">Rate your ability to analyze and understand complex texts</p>
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map(level => (
-                <button
-                  key={level}
-                  onClick={() => setFormData({ ...formData, readingSkill: level })}
-                  className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-                    formData.readingSkill === level
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Level {level}</span>
-                    <span className="text-sm text-gray-600">
-                      {level === 1 && 'Struggling'}
-                      {level === 2 && 'Below Average'}
-                      {level === 3 && 'Average'}
-                      {level === 4 && 'Good'}
-                      {level === 5 && 'Excellent'}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
+        return {
+          section: 'Section 1: Reading, Writing & Analysis Skills',
+          question: 'When you read an exam text, what usually happens first?',
+          type: 'single' as const,
+          field: 'readingSkill',
+          options: [
+            { value: 'A', label: 'I get confused by long paragraphs or unfamiliar vocabulary' },
+            { value: 'B', label: 'I understand the basic story/info but miss deeper meaning' },
+            { value: 'C', label: 'I understand most things but struggle to find the best evidence' },
+            { value: 'D', label: 'I understand the text well and can spot deeper meanings' },
+          ],
+        };
       case 2:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              How about your writing skills?
-            </h2>
-            <p className="text-gray-600">Rate your ability to write clear, structured responses</p>
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map(level => (
-                <button
-                  key={level}
-                  onClick={() => setFormData({ ...formData, writingSkill: level })}
-                  className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-                    formData.writingSkill === level
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Level {level}</span>
-                    <span className="text-sm text-gray-600">
-                      {level === 1 && 'Struggling'}
-                      {level === 2 && 'Below Average'}
-                      {level === 3 && 'Average'}
-                      {level === 4 && 'Good'}
-                      {level === 5 && 'Excellent'}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
+        return {
+          section: 'Section 1: Reading, Writing & Analysis Skills',
+          question: 'When you write exam answers, what feels hardest?',
+          type: 'single',
+          field: 'writingSkill',
+          options: [
+            { value: 'A', label: 'Starting the answer / organising my ideas' },
+            { value: 'B', label: 'Writing clearly with correct grammar' },
+            { value: 'C', label: 'Adding deeper analysis / explaining effects' },
+            { value: 'D', label: 'Writing fast enough under time pressure' },
+          ],
+        };
       case 3:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              How confident are you with literary analysis?
-            </h2>
-            <p className="text-gray-600">Rate your ability to analyze themes, techniques, and author choices</p>
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map(level => (
-                <button
-                  key={level}
-                  onClick={() => setFormData({ ...formData, analysisSkill: level })}
-                  className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-                    formData.analysisSkill === level
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Level {level}</span>
-                    <span className="text-sm text-gray-600">
-                      {level === 1 && 'Struggling'}
-                      {level === 2 && 'Below Average'}
-                      {level === 3 && 'Average'}
-                      {level === 4 && 'Good'}
-                      {level === 5 && 'Excellent'}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
+        return {
+          section: 'Section 1: Reading, Writing & Analysis Skills',
+          question: 'When analyzing language, what do you normally write?',
+          type: 'single',
+          field: 'analysisSkill',
+          options: [
+            { value: 'A', label: 'I mostly label techniques (simile, metaphor, etc.)' },
+            { value: 'B', label: 'I describe what the quote shows' },
+            { value: 'C', label: 'I try to explain the effect but it feels shallow' },
+            { value: 'D', label: 'I can explain deeper effects confidently' },
+          ],
+        };
       case 4:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Which exam papers do you struggle with most?
-            </h2>
-            <p className="text-gray-600">Select all that apply</p>
-            <div className="space-y-3">
-              {[
-                'Paper 1: Guided Literary Analysis',
-                'Paper 2: Comparative Essay',
-                'Understanding question requirements',
-                'Time management during exam',
-                'Structuring my responses',
-                'Finding relevant evidence',
-              ].map(struggle => (
-                <button
-                  key={struggle}
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      examStruggles: toggleArrayItem(formData.examStruggles, struggle),
-                    })
-                  }
-                  className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-                    formData.examStruggles.includes(struggle)
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {struggle}
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
+        return {
+          section: 'Section 2: Specific Paper Weaknesses',
+          question: 'Which paper questions do you struggle with most?',
+          subtitle: 'Select as many as apply',
+          type: 'multiple',
+          field: 'examStruggles',
+          options: [
+            'Paper 1 Q1 (a-e) - Simple Comprehension',
+            'Paper 1 Q1f - Summary',
+            'Paper 1 Q2(a-c) - Comprehension and Vocabulary',
+            'Paper 1 Q2d - Writer\'s Effect',
+            'Paper 1 Q3 - Extended Response',
+            'Paper 2 Q1 - Directed Writing',
+            'Paper 2 Q2 - Narrative',
+            'Paper 2 Q2 - Descriptive',
+            'I\'m not sure — I need help identifying them',
+          ],
+        };
       case 5:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Tell us more about your difficulties
-            </h2>
-            <p className="text-gray-600">Help us understand what you find most challenging</p>
-            <textarea
-              value={formData.difficultyExplanation}
-              onChange={(e) => setFormData({ ...formData, difficultyExplanation: e.target.value })}
-              rows={6}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Describe the specific areas where you need the most help..."
-            />
-          </div>
-        );
-
-      case 6:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              How do you prefer to study?
-            </h2>
-            <p className="text-gray-600">Select your preferred study methods</p>
-            <div className="space-y-3">
-              {[
-                'Reading notes and guides',
-                'Watching video explanations',
-                'Practice questions',
-                'Flashcards and quick reviews',
-                'Discussion with AI tutor',
-                'Writing practice essays',
-              ].map(method => (
-                <button
-                  key={method}
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      studyMethods: toggleArrayItem(formData.studyMethods, method),
-                    })
-                  }
-                  className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-                    formData.studyMethods.includes(method)
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {method}
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 7:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              How much time can you dedicate to studying?
-            </h2>
-            <p className="text-gray-600">Help us create a realistic study plan</p>
-            <div className="space-y-3">
-              {[
-                '1-2 hours per week',
-                '3-5 hours per week',
-                '6-10 hours per week',
-                '10+ hours per week',
-              ].map(time => (
-                <button
-                  key={time}
-                  onClick={() => setFormData({ ...formData, studyTimeAvailability: time })}
-                  className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-                    formData.studyTimeAvailability === time
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {time}
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 8:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              What type of study plan works best for you?
-            </h2>
-            <p className="text-gray-600">Choose your preferred planning style</p>
-            <div className="space-y-3">
-              {[
-                { value: 'structured', label: 'Structured Daily Schedule', desc: 'Fixed daily tasks and routines' },
-                { value: 'flexible', label: 'Flexible Weekly Goals', desc: 'Complete tasks at your own pace' },
-                { value: 'intensive', label: 'Intensive Focus Sessions', desc: 'Longer, deeper study sessions' },
-                { value: 'mixed', label: 'Mixed Approach', desc: 'Combination of different methods' },
-              ].map(plan => (
-                <button
-                  key={plan.value}
-                  onClick={() => setFormData({ ...formData, planPreference: plan.value })}
-                  className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-                    formData.planPreference === plan.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="font-medium">{plan.label}</div>
-                  <div className="text-sm text-gray-600 mt-1">{plan.desc}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 9:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              How stressed do you feel about the exam?
-            </h2>
-            <p className="text-gray-600">Understanding your stress level helps us support you better</p>
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map(level => (
-                <button
-                  key={level}
-                  onClick={() => setFormData({ ...formData, stressLevel: level })}
-                  className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-                    formData.stressLevel === level
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Level {level}</span>
-                    <span className="text-sm text-gray-600">
-                      {level === 1 && 'Relaxed'}
-                      {level === 2 && 'Slightly Concerned'}
-                      {level === 3 && 'Moderately Stressed'}
-                      {level === 4 && 'Very Stressed'}
-                      {level === 5 && 'Extremely Stressed'}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 10:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              You're all set!
-            </h2>
-            <p className="text-gray-600">
-              We've created a personalized study plan based on your responses. Let's start your journey to exam success!
-            </p>
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl space-y-4">
-              <h3 className="font-semibold text-gray-900">Your Profile Summary:</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600">Reading:</span>
-                  <span className="ml-2 font-medium">Level {formData.readingSkill}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Writing:</span>
-                  <span className="ml-2 font-medium">Level {formData.writingSkill}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Analysis:</span>
-                  <span className="ml-2 font-medium">Level {formData.analysisSkill}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Study Time:</span>
-                  <span className="ml-2 font-medium">{formData.studyTimeAvailability}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
+        return {
+          section: 'Section 2: Specific Paper Weaknesses',
+          question: 'If you know why you struggle with any of those questions, what\'s the reason?',
+          subtitle: 'Explain in one or two sentences why these questions feel difficult',
+          type: 'text',
+          field: 'difficultyExplanation',
+          placeholder: 'For example: "I never know how to start my answer for Q2d" or "I run out of time on Q3 because I write too slowly"',
+        };
       default:
         return null;
     }
   };
 
+  const content = getQuestionContent();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center px-4 py-12">
-      <div className="max-w-2xl w-full">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-gray-600">
-              Step {currentStep} of {totalSteps}
-            </span>
-            <span className="text-sm font-medium text-gray-600">
-              {Math.round((currentStep / totalSteps) * 100)}% Complete
-            </span>
+    <div className="min-h-screen relative flex items-center justify-center overflow-hidden">
+      {/* Pixel Animation Background */}
+      <div className="absolute inset-0 z-0">
+        <PixelAnimation
+          colorHueStart={280}
+          colorHueRange={40}
+          pixelGap={8}
+          animationSpeed={0.2}
+          animationDuration={400}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="w-full h-screen flex items-center justify-center relative z-10 px-8">
+        <div className="w-full max-w-7xl grid grid-cols-2 gap-16 items-center">
+          {/* Left Side - Question */}
+          <div
+            key={`question-${currentStep}`}
+            className="space-y-6 animate-slide-in-left"
+            style={{
+              animation: direction === 'forward' ? 'slideInLeft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'slideInRight 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+          >
+            {/* Progress */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-white/60 sulphur-point-regular">
+                  Step {currentStep} of {totalSteps}
+                </span>
+                <span className="text-sm font-medium text-white/60 sulphur-point-regular">
+                  {Math.round((currentStep / totalSteps) * 100)}%
+                </span>
+              </div>
+              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700 ease-out"
+                  style={{
+                    width: `${(currentStep / totalSteps) * 100}%`,
+                    backgroundColor: '#aa08f3',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Section Label */}
+            <div className="opacity-60">
+              <p className="text-sm font-bold tracking-wider sulphur-point-bold uppercase" style={{ color: '#aa08f3' }}>
+                {content?.section}
+              </p>
+            </div>
+
+            {/* Question */}
+            <div className="space-y-4">
+              <h1 className="text-5xl font-bold text-white sulphur-point-bold leading-tight">
+                {content?.question}
+              </h1>
+              {content?.subtitle && (
+                <p className="text-xl text-white/60 sulphur-point-regular">
+                  {content.subtitle}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-300"
-              style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-            />
-          </div>
-        </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-          {renderStep()}
-
-          <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
-            <button
-              onClick={handleBack}
-              disabled={currentStep === 1}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              <span>Back</span>
-            </button>
-
-            {currentStep < totalSteps ? (
-              <button
-                onClick={handleNext}
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg font-medium hover:from-blue-600 hover:to-cyan-600 transition-all"
-              >
-                <span>Next</span>
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            ) : (
-              <button
-                onClick={handleComplete}
-                disabled={loading}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg font-medium hover:from-blue-600 hover:to-cyan-600 transition-all disabled:opacity-50"
-              >
-                {loading ? 'Creating your plan...' : 'Complete Setup'}
-              </button>
+          {/* Right Side - Options */}
+          <div
+            key={`options-${currentStep}`}
+            className="space-y-4"
+            style={{
+              animation: direction === 'forward' ? 'slideInRight 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'slideInLeft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+          >
+            {content?.type === 'single' && content.options && (
+              <div className="space-y-3">
+                {(content.options as { value: string; label: string }[]).map((option, index) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setFormData({ ...formData, [content.field]: option.value })}
+                    className="w-full p-6 rounded-2xl text-left transition-all duration-300 hover:scale-105 hover:-translate-y-1 group"
+                    style={{
+                      backgroundColor: formData[content.field as keyof OnboardingData] === option.value
+                        ? 'rgba(170, 8, 243, 0.3)'
+                        : 'rgba(255, 255, 255, 0.05)',
+                      border: formData[content.field as keyof OnboardingData] === option.value
+                        ? '2px solid #aa08f3'
+                        : '2px solid rgba(255, 255, 255, 0.1)',
+                      backdropFilter: 'blur(10px)',
+                      animationDelay: `${index * 0.1}s`,
+                      animation: 'fadeInUp 0.5s ease-out backwards',
+                    }}
+                  >
+                    <div className="flex items-start space-x-4">
+                      <span
+                        className="font-bold text-2xl sulphur-point-bold transition-colors duration-300"
+                        style={{
+                          color: formData[content.field as keyof OnboardingData] === option.value ? '#aa08f3' : 'rgba(255, 255, 255, 0.4)',
+                        }}
+                      >
+                        {option.value}.
+                      </span>
+                      <span className="text-white text-lg sulphur-point-regular group-hover:text-white/90 transition-colors duration-300">
+                        {option.label}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             )}
+
+            {content?.type === 'multiple' && content.options && (
+              <div className="space-y-3">
+                {(content.options as string[]).map((option, index) => (
+                  <button
+                    key={option}
+                    onClick={() => setFormData({
+                      ...formData,
+                      examStruggles: toggleArrayItem(formData.examStruggles, option),
+                    })}
+                    className="w-full p-6 rounded-2xl text-left transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+                    style={{
+                      backgroundColor: formData.examStruggles.includes(option)
+                        ? 'rgba(170, 8, 243, 0.3)'
+                        : 'rgba(255, 255, 255, 0.05)',
+                      border: formData.examStruggles.includes(option)
+                        ? '2px solid #aa08f3'
+                        : '2px solid rgba(255, 255, 255, 0.1)',
+                      backdropFilter: 'blur(10px)',
+                      animationDelay: `${index * 0.1}s`,
+                      animation: 'fadeInUp 0.5s ease-out backwards',
+                    }}
+                  >
+                    <span className="text-white text-lg sulphur-point-regular">
+                      {option}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {content?.type === 'text' && (
+              <div style={{ animation: 'fadeInUp 0.5s ease-out backwards' }}>
+                <textarea
+                  value={formData.difficultyExplanation}
+                  onChange={(e) => setFormData({ ...formData, difficultyExplanation: e.target.value })}
+                  rows={8}
+                  className="w-full px-6 py-4 rounded-2xl text-white text-lg sulphur-point-regular transition-all duration-300 focus:scale-105"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    border: '2px solid rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(10px)',
+                  }}
+                  placeholder={content.placeholder}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#aa08f3';
+                    e.target.style.backgroundColor = 'rgba(170, 8, 243, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex items-center justify-between pt-8">
+              <button
+                onClick={handleBack}
+                disabled={currentStep === 1}
+                className="flex items-center space-x-2 px-6 py-3 rounded-xl transition-all duration-300 hover:scale-110 disabled:opacity-30 disabled:hover:scale-100"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                }}
+              >
+                <ChevronLeft className="w-5 h-5" style={{ color: '#aa08f3' }} />
+                <span className="text-white sulphur-point-bold">Back</span>
+              </button>
+
+              {currentStep < totalSteps ? (
+                <button
+                  onClick={handleNext}
+                  className="flex items-center space-x-2 px-8 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-110 sulphur-point-bold"
+                  style={{
+                    backgroundColor: '#aa08f3',
+                    color: 'white',
+                  }}
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleComplete}
+                  disabled={loading}
+                  className="px-8 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-110 disabled:opacity-50 sulphur-point-bold"
+                  style={{
+                    backgroundColor: '#aa08f3',
+                    color: 'white',
+                  }}
+                >
+                  {loading ? 'Creating your plan...' : 'Complete Setup'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* CSS Animations */}
+      <style>{`
+        @keyframes slideInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-100px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(100px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        ::placeholder {
+          color: rgba(255, 255, 255, 0.3);
+        }
+      `}</style>
     </div>
   );
 };

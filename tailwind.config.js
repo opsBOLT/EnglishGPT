@@ -3,6 +3,9 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Sulphur Point"', 'sans-serif'],
+      },
       colors: {
         primary: {
           50: '#f5f3ff',

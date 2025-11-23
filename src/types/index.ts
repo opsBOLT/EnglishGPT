@@ -9,15 +9,11 @@ export interface User {
 export interface OnboardingResponse {
   id: string;
   user_id: string;
-  reading_skill: number;
-  writing_skill: number;
-  analysis_skill: number;
+  reading_skill: 'A' | 'B' | 'C' | 'D';
+  writing_skill: 'A' | 'B' | 'C' | 'D';
+  analysis_skill: 'A' | 'B' | 'C' | 'D';
   exam_struggles: string[];
   difficulty_explanation: string;
-  study_methods: string[];
-  study_time_availability: string;
-  plan_preference: string;
-  stress_level: number;
   created_at: string;
 }
 
