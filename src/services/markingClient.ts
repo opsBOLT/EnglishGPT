@@ -36,17 +36,14 @@ export type EvaluateResult = {
 
 const API_URL = import.meta.env.VITE_ENGLISHGPT_API_URL || 'https://englishgpt.everythingenglish.xyz';
 const X_API_KEY =
-  import.meta.env.X_API_KEY ||
-  import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY ||
+  import.meta.env.VITE_INTERNAL_API_KEY ||
   import.meta.env.VITE_ENGLISHGPT_API_KEY;
 
-const KEY_SOURCE = import.meta.env.X_API_KEY
-  ? 'X_API_KEY'
-  : import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY
-    ? 'VITE_ENGLISHGPT_GENERAL_API_KEY'
-    : import.meta.env.VITE_ENGLISHGPT_API_KEY
-      ? 'VITE_ENGLISHGPT_API_KEY'
-      : null;
+const KEY_SOURCE = import.meta.env.VITE_INTERNAL_API_KEY
+  ? 'VITE_INTERNAL_API_KEY'
+  : import.meta.env.VITE_ENGLISHGPT_API_KEY
+    ? 'VITE_ENGLISHGPT_API_KEY'
+    : null;
 
 export async function evaluateEssayPublic(params: EvaluateParams): Promise<EvaluateResult> {
   if (!X_API_KEY) {
