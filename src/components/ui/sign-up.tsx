@@ -213,7 +213,6 @@ export const AuthComponent = ({ logo = <DefaultLogo />, brandName = "EaseMize", 
 
         startSuccessSequence();
     } catch (error) {
-        console.error('Sign up error:', error);
         setModalErrorMessage(error instanceof Error ? error.message : 'Failed to sign up. Please try again.');
         setModalStatus('error');
     } finally {

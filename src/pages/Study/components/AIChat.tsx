@@ -61,7 +61,6 @@ const AIChat = ({ sessionId, category }: AIChatProps) => {
           .eq('id', sessionId);
       });
     } catch (error) {
-      console.error('Error sending message:', error);
     } finally {
       setLoading(false);
     }

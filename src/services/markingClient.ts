@@ -40,6 +40,14 @@ const X_API_KEY =
   import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY ||
   import.meta.env.VITE_ENGLISHGPT_API_KEY;
 
+const KEY_SOURCE = import.meta.env.X_API_KEY
+  ? 'X_API_KEY'
+  : import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY
+    ? 'VITE_ENGLISHGPT_GENERAL_API_KEY'
+    : import.meta.env.VITE_ENGLISHGPT_API_KEY
+      ? 'VITE_ENGLISHGPT_API_KEY'
+      : null;
+
 export async function evaluateEssayPublic(params: EvaluateParams): Promise<EvaluateResult> {
   if (!X_API_KEY) {
     console.error('[markingClient] Missing marking API key; set X_API_KEY or VITE_ENGLISHGPT_GENERAL_API_KEY.', {
@@ -63,6 +71,7 @@ export async function evaluateEssayPublic(params: EvaluateParams): Promise<Evalu
   };
 
   console.debug('[markingClient] Calling evaluate API', { url, payloadPreview: { ...payload, student_response: `${params.essay.slice(0, 120)}${params.essay.length > 120 ? '...[truncated]' : ''}` } });
+  console.debug('[markingClient] Using API key source', { source: KEY_SOURCE, keyLength: X_API_KEY.length });
 
   const resp = await fetch(url, {
     method: 'POST',

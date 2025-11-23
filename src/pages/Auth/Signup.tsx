@@ -9,45 +9,24 @@ const Signup = () => {
   const navigate = useNavigate();
   const isSigningUp = useRef(false);
 
-  console.log('[Signup] Component state:', {
-    hasUser: !!user,
-    userId: user?.id,
-    hasSession: !!session,
-    loading,
-    isSigningUp: isSigningUp.current
-  });
-
   useEffect(() => {
-    console.log('[Signup] useEffect triggered', {
-      hasUser: !!user,
-      userId: user?.id,
-      isSigningUp: isSigningUp.current
-    });
-
     if (user && isSigningUp.current) {
-      console.log('[Signup] Navigating to onboarding with user:', user.id);
       navigate('/onboarding');
       isSigningUp.current = false;
     }
   }, [user, navigate]);
 
   const handleGoogleSignIn = async () => {
-    console.log('[Signup] Google sign-in initiated');
     const { error } = await signInWithGoogle();
-    if (error) {
-      console.error('[Signup] Google sign-in error:', error);
-    }
+    if (error) return;
   };
 
   const handleSignUpSuccess = () => {
-    console.log('[Signup] handleSignUpSuccess called - setting isSigningUp flag');
     isSigningUp.current = true;
   };
 
   const handleEmailSignUp = async (email: string, password: string) => {
-    console.log('[Signup] Email signup initiated for:', email);
     const { error } = await signUp(email, password);
-    console.log('[Signup] Email signup completed', { hasError: !!error, error });
     return { error };
   };
 

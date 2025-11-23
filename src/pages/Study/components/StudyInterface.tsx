@@ -46,7 +46,6 @@ const StudyInterface = ({ sessionId, category }: StudyInterfaceProps) => {
 
       navigate('/dashboard');
     } catch (error) {
-      console.error('Error ending session:', error);
     }
   };
 

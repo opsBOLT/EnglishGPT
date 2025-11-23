@@ -58,21 +58,16 @@ const Onboarding = () => {
       let markingResult = null;
 
       if (formData.weaknessQuestionType && formData.weaknessEssay) {
-        console.debug('[Onboarding] Running marking for Q5', {
-          questionType: formData.weaknessQuestionType,
-          essayPreview: `${formData.weaknessEssay.slice(0, 120)}${formData.weaknessEssay.length > 120 ? '...[truncated]' : ''}`,
-        });
         try {
           markingResult = await evaluateEssayPublic({
             questionType: formData.weaknessQuestionType,
             essay: formData.weaknessEssay,
           });
-          console.debug('[Onboarding] Marking result', markingResult);
         } catch (err) {
-          console.error('[Onboarding] Marking call failed', err);
+          setError('Failed to mark the essay. Please try again.');
+          setLoading(false);
+          return;
         }
-      } else {
-        console.debug('[Onboarding] Skipping marking; missing question type or essay');
       }
 
       const { error } = await supabase.from('onboarding_responses').insert({
@@ -86,13 +81,10 @@ const Onboarding = () => {
       });
 
       if (error) {
-        console.error('[Onboarding] Error saving onboarding response', error);
         throw error;
       }
-      console.debug('[Onboarding] Onboarding response saved');
 
       await updateProfile({ onboarding_completed: true });
-      console.debug('[Onboarding] Profile updated to onboarding_completed');
 
       const progressCategories = ['paper1', 'paper2', 'examples', 'text_types', 'vocabulary'];
       const progressInserts = progressCategories.map(category => ({
@@ -105,14 +97,12 @@ const Onboarding = () => {
 
       const { error: progressError } = await supabase.from('student_progress').insert(progressInserts);
       if (progressError) {
-        console.error('[Onboarding] Error seeding student_progress', progressError);
-      } else {
-        console.debug('[Onboarding] Seeded student_progress rows');
+        // Ignore seeding errors so onboarding flow can complete.
       }
 
       navigate('/dashboard');
     } catch (error) {
-      console.error('Error saving onboarding:', error);
+      setError('Failed to save your onboarding. Please try again.');
     } finally {
       setLoading(false);
     }

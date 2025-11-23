@@ -164,7 +164,6 @@ Return ONLY valid JSON in this exact format:
   try {
     return JSON.parse(jsonStr.trim());
   } catch (error) {
-    console.error('Failed to parse study plan JSON:', error);
     throw new Error('Failed to generate study plan. Please try again.');
   }
 }
@@ -294,7 +293,6 @@ Return ONLY valid JSON in this format:
   try {
     return JSON.parse(jsonStr.trim());
   } catch (error) {
-    console.error('Failed to parse session analysis JSON:', error);
     return {
       weak_topics: [],
       preferred_methods: revisionMethods,
@@ -374,7 +372,6 @@ Return ONLY valid JSON in this format:
   try {
     return JSON.parse(jsonStr.trim());
   } catch (error) {
-    console.error('Failed to parse marking result JSON:', error);
     throw new Error('Failed to mark answer. Please try again.');
   }
 }

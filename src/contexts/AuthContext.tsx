@@ -30,19 +30,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('[AuthContext] Initializing auth state');
-
     if (supabaseMissingEnv) {
-      console.error('[AuthContext] Supabase env missing. Auth disabled until VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.');
       setLoading(false);
       return;
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[AuthContext] Initial session check:', {
-        hasSession: !!session,
-        userId: session?.user?.id
-      });
       setSession(session);
       if (session?.user) {
         fetchUserProfile(session.user.id);
@@ -50,16 +43,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
       }
     }).catch((error) => {
-      console.error('[AuthContext] getSession failed:', error);
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[AuthContext] Auth state changed:', {
-        event,
-        hasSession: !!session,
-        userId: session?.user?.id
-      });
       setSession(session);
       if (session?.user) {
         fetchUserProfile(session.user.id);
@@ -73,7 +60,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const fetchUserProfile = async (userId: string) => {
-    console.log('[AuthContext] Fetching user profile for:', userId);
     try {
       const { data, error } = await supabase
         .from('users')
@@ -83,16 +69,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
 
-      console.log('[AuthContext] User profile fetched:', {
-        hasData: !!data,
-        userId: data?.id,
-        email: data?.email,
-        onboarding_completed: data?.onboarding_completed
-      });
-
       // If no profile exists, create one (for Google OAuth users)
       if (!data) {
-        console.log('[AuthContext] No profile found, creating one for OAuth user');
         const { data: { user: authUser } } = await supabase.auth.getUser();
 
         if (authUser) {
@@ -107,22 +85,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .select()
             .single();
 
-          if (insertError) {
-            console.error('[AuthContext] Error creating profile for OAuth user:', insertError);
-            throw insertError;
-          }
+          if (insertError) throw insertError;
 
-          console.log('[AuthContext] Created new profile for OAuth user:', newProfile);
           setUser(newProfile);
         } else {
-          console.error('[AuthContext] No auth user found when creating profile');
           setUser(null);
         }
       } else {
         setUser(data);
       }
     } catch (error) {
-      console.error('[AuthContext] Error fetching user profile:', error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -130,26 +102,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    console.log('[AuthContext] signUp called for:', email);
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      console.log('[AuthContext] Auth signup result:', {
-        hasError: !!authError,
-        error: authError,
-        hasUser: !!authData.user,
-        userId: authData.user?.id,
-        hasSession: !!authData.session
-      });
-
       if (authError) throw authError;
 
       if (authData.user) {
         const derivedName = fullName || email.split('@')[0] || 'New User';
-        console.log('[AuthContext] Creating user profile with name:', derivedName);
 
         const { error: profileError } = await supabase
           .from('users')
@@ -160,18 +122,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             onboarding_completed: false,
           });
 
-        console.log('[AuthContext] Profile creation result:', {
-          hasError: !!profileError,
-          error: profileError
-        });
-
         if (profileError) throw profileError;
       }
 
-      console.log('[AuthContext] signUp completed successfully');
       return { error: null };
     } catch (error) {
-      console.error('[AuthContext] signUp failed:', error);
       return { error: error as Error };
     }
   };

@@ -46,7 +46,6 @@ const NotesPanel = ({ sessionId, category }: NotesPanelProps) => {
         setNoteId(data.id);
       }
     } catch (error) {
-      console.error('Error loading notes:', error);
     }
   };
 
@@ -83,7 +82,6 @@ const NotesPanel = ({ sessionId, category }: NotesPanelProps) => {
 
       setLastSaved(new Date());
     } catch (error) {
-      console.error('Error saving notes:', error);
     } finally {
       setSaving(false);
     }
