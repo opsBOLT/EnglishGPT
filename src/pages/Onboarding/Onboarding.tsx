@@ -58,6 +58,12 @@ const Onboarding = () => {
     }
   };
 
+  const handleTestResult = () => {
+    const targetId = userId || user?.id;
+    if (!targetId) return;
+    navigate(`/onboarding/${targetId}/result?test=true`);
+  };
+
   const handleComplete = async () => {
     if (!user) return;
 
@@ -502,21 +508,30 @@ const Onboarding = () => {
                   <ChevronRight className="w-5 h-5" />
                 </button>
               ) : (
-                <button
-                  onClick={handleComplete}
-                  disabled={
-                    loading ||
-                    !formData.weaknessQuestionType ||
-                    !formData.weaknessEssay.trim()
-                  }
-                  className="px-8 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-110 disabled:opacity-50 sulphur-point-bold"
-                  style={{
-                    backgroundColor: '#aa08f3',
-                    color: 'white',
-                  }}
-                >
-                  {loading ? 'Marking your response...' : 'Mark this response'}
-                </button>
+                <div className="flex flex-wrap gap-3 justify-end">
+                  <button
+                    onClick={handleTestResult}
+                    className="px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105 sulphur-point-bold border border-white/30"
+                    style={{ color: '#aa08f3', backgroundColor: 'rgba(255, 255, 255, 0.12)' }}
+                  >
+                    View test result
+                  </button>
+                  <button
+                    onClick={handleComplete}
+                    disabled={
+                      loading ||
+                      !formData.weaknessQuestionType ||
+                      !formData.weaknessEssay.trim()
+                    }
+                    className="px-8 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-110 disabled:opacity-50 sulphur-point-bold"
+                    style={{
+                      backgroundColor: '#aa08f3',
+                      color: 'white',
+                    }}
+                  >
+                    {loading ? 'Marking your response...' : 'Mark this response'}
+                  </button>
+                </div>
               )}
             </div>
           </div>
