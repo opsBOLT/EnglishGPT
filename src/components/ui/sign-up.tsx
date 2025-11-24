@@ -318,7 +318,7 @@ useEffect(() => {
                 overflow: hidden;
                 cursor: pointer;
                 outline-offset: 4px;
-                font-family: "Inter", sans-serif;
+                font-family: "Shantell Sans", cursive;
                 font-weight: 500;
                 border: 1px solid transparent;
                 border-radius: 0.5rem;
@@ -422,7 +422,7 @@ useEffect(() => {
             <fieldset disabled={modalStatus !== 'closed'} className="relative z-10 flex flex-col items-center gap-8 w-[280px] mx-auto p-4">
                 <AnimatePresence mode="wait">
                     {authStep === "email" && <motion.div key="email-content" initial={{ y: 6, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="w-full flex flex-col items-center gap-4">
-                        <BlurFade delay={0.25 * 1} className="w-full"><div className="text-center"><p style={{ fontFamily: '"Sulphur Point", sans-serif' }} className="font-light text-4xl sm:text-5xl md:text-6xl tracking-tight text-gray-900 whitespace-nowrap">The Best Learning Decision You'll Ever Make</p></div></BlurFade>
+                        <BlurFade delay={0.25 * 1} className="w-full"><div className="text-center"><p className="font-light text-4xl sm:text-5xl md:text-6xl tracking-tight text-gray-900 whitespace-nowrap">The Best Learning Decision You'll Ever Make</p></div></BlurFade>
                         <BlurFade delay={0.25 * 2}><p className="text-sm font-medium text-gray-600">Continue with</p></BlurFade>
                         <BlurFade delay={0.25 * 3}><div className="flex items-center justify-center gap-4 w-full">
                             <ShinyButton onClick={onGoogleSignIn} className="flex items-center justify-center gap-2" size="sm"><GoogleIcon /><span className="font-semibold">Google</span></ShinyButton>
@@ -430,11 +430,11 @@ useEffect(() => {
                         <BlurFade delay={0.25 * 4} className="w-[300px]"><div className="flex items-center w-full gap-2 py-2"><hr className="w-full border-gray-300"/><span className="text-xs font-semibold text-gray-600">OR</span><hr className="w-full border-gray-300"/></div></BlurFade>
                     </motion.div>}
                     {authStep === "password" && <motion.div key="password-title" initial={{ y: 6, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="w-full flex flex-col items-center text-center gap-4">
-                        <BlurFade delay={0} className="w-full"><div className="text-center"><p style={{ fontFamily: '"Sulphur Point", sans-serif' }} className="font-light text-4xl sm:text-5xl tracking-tight text-gray-900 whitespace-nowrap">Create your password</p></div></BlurFade>
+                        <BlurFade delay={0} className="w-full"><div className="text-center"><p className="font-light text-4xl sm:text-5xl tracking-tight text-gray-900 whitespace-nowrap">Create your password</p></div></BlurFade>
                         <BlurFade delay={0.25 * 1}><p className="text-sm font-medium text-gray-600">Your password must be at least 6 characters long.</p></BlurFade>
                     </motion.div>}
                      {authStep === "confirmPassword" && <motion.div key="confirm-title" initial={{ y: 6, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="w-full flex flex-col items-center text-center gap-4">
-                         <BlurFade delay={0} className="w-full"><div className="text-center"><p style={{ fontFamily: '"Sulphur Point", sans-serif' }} className="font-light text-4xl sm:text-5xl tracking-tight text-gray-900 whitespace-nowrap">One Last Step</p></div></BlurFade>
+                         <BlurFade delay={0} className="w-full"><div className="text-center"><p className="font-light text-4xl sm:text-5xl tracking-tight text-gray-900 whitespace-nowrap">One Last Step</p></div></BlurFade>
                          <BlurFade delay={0.25 * 1}><p className="text-sm font-medium text-gray-600">Confirm your password to continue</p></BlurFade>
                     </motion.div>}
                 </AnimatePresence>
