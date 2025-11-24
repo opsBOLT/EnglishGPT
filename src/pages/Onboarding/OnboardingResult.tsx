@@ -158,7 +158,7 @@ const OnboardingResult = () => {
                 )}
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => {
                   // Navigate to study plan generation with onboarding data
@@ -180,6 +180,13 @@ const OnboardingResult = () => {
                 style={{ color: accent }}
               >
                 Build my study plan
+              </button>
+              <button
+                onClick={() => navigate('/dashboard?test=true')}
+                className="px-5 py-3 rounded-xl font-bold sulphur-point-bold transition-colors"
+                style={{ backgroundColor: accent, color: 'white' }}
+              >
+                View test study plan
               </button>
               <button
                 onClick={() => navigate(`/onboarding/${userId}`)}

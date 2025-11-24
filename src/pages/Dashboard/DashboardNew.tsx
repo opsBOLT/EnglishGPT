@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { useSearchParams } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
 import SiriOrb from '../../components/ui/siri-orb';
 import { TextGenerateEffect } from '../../components/ui/text-generate-effect';
@@ -29,6 +30,8 @@ interface Task {
 
 const DashboardNew = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const isTestMode = searchParams.get('test') === 'true';
   const [loading, setLoading] = useState(true);
   const [studyPlan, setStudyPlan] = useState<StudyPlan | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -36,9 +39,13 @@ const DashboardNew = () => {
 
   useEffect(() => {
     if (user) {
-      loadDashboardData();
+      if (isTestMode) {
+        loadMockData();
+      } else {
+        loadDashboardData();
+      }
     }
-  }, [user]);
+  }, [user, isTestMode]);
 
   const loadDashboardData = async () => {
     if (!user) return;
@@ -94,6 +101,126 @@ const DashboardNew = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadMockData = () => {
+    setLoading(true);
+
+    // Mock study plan
+    const mockPlan: StudyPlan = {
+      id: 'test-plan-123',
+      target_grade: 'A*',
+      weekly_hours: 8,
+      is_active: true,
+      plan_data: {
+        overview: 'A comprehensive 4-week study plan focused on strengthening your analytical writing and comprehension skills. This plan prioritizes Paper 1 Q2d (Writer\'s Effect) and Paper 2 Descriptive Writing, with daily practice in vocabulary enhancement and example response analysis.',
+        keyFocusAreas: [
+          'Writer\'s Effect Analysis',
+          'Descriptive Writing Techniques',
+          'Vocabulary Enhancement',
+          'Quote Integration'
+        ],
+        weeks: [{
+          week: 1,
+          focus: 'Writer\'s Effect Fundamentals',
+          daily_tasks: [{
+            day: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
+            tasks: [
+              {
+                title: 'Analyze Writer\'s Effect Techniques',
+                description: 'Study how writers create mood and atmosphere through language choices. Focus on identifying techniques like metaphor, personification, and sensory details in sample passages.',
+                category: 'paper1',
+                duration: '45 min'
+              },
+              {
+                title: 'Practice Descriptive Writing',
+                description: 'Write a 300-word descriptive piece focusing on creating vivid imagery. Use at least 5 sensory details and 3 advanced vocabulary words.',
+                category: 'paper2',
+                duration: '40 min'
+              },
+              {
+                title: 'Vocabulary Building Session',
+                description: 'Learn 10 new advanced vocabulary words with example sentences. Practice using them in context to describe emotions and settings.',
+                category: 'vocabulary',
+                duration: '30 min'
+              },
+              {
+                title: 'Study High-Level Examples',
+                description: 'Review 2 A-grade example responses for Paper 1 Q2d. Annotate effective techniques and quote integration methods used by top students.',
+                category: 'examples',
+                duration: '35 min'
+              },
+              {
+                title: 'Text Type Analysis',
+                description: 'Study the criteria for descriptive writing. Create a checklist of essential elements: vocabulary, imagery, sentence variety, and structural coherence.',
+                category: 'text_types',
+                duration: '25 min'
+              }
+            ]
+          }]
+        }]
+      }
+    };
+
+    setStudyPlan(mockPlan);
+
+    // Mock tasks
+    const dayOfWeek = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    const mockTasks: Task[] = [
+      {
+        id: 'task-1',
+        title: 'Analyze Writer\'s Effect Techniques',
+        description: 'Study how writers create mood and atmosphere through language choices. Focus on identifying techniques like metaphor, personification, and sensory details in sample passages.',
+        category: 'paper1',
+        duration: '45 min',
+        day: dayOfWeek,
+        completed: false
+      },
+      {
+        id: 'task-2',
+        title: 'Practice Descriptive Writing',
+        description: 'Write a 300-word descriptive piece focusing on creating vivid imagery. Use at least 5 sensory details and 3 advanced vocabulary words.',
+        category: 'paper2',
+        duration: '40 min',
+        day: dayOfWeek,
+        completed: false
+      },
+      {
+        id: 'task-3',
+        title: 'Vocabulary Building Session',
+        description: 'Learn 10 new advanced vocabulary words with example sentences. Practice using them in context to describe emotions and settings.',
+        category: 'vocabulary',
+        duration: '30 min',
+        day: dayOfWeek,
+        completed: false
+      },
+      {
+        id: 'task-4',
+        title: 'Study High-Level Examples',
+        description: 'Review 2 A-grade example responses for Paper 1 Q2d. Annotate effective techniques and quote integration methods used by top students.',
+        category: 'examples',
+        duration: '35 min',
+        day: dayOfWeek,
+        completed: false
+      },
+      {
+        id: 'task-5',
+        title: 'Text Type Analysis',
+        description: 'Study the criteria for descriptive writing. Create a checklist of essential elements: vocabulary, imagery, sentence variety, and structural coherence.',
+        category: 'text_types',
+        duration: '25 min',
+        day: dayOfWeek,
+        completed: false
+      }
+    ];
+
+    setTasks(mockTasks);
+
+    // Mock AI message
+    const greeting = getGreeting();
+    setAiMessage(`${greeting}, ${user?.full_name || 'learner'}! This is a test study plan designed to help you reach an A* grade. Today we're focusing on Writer's Effect Analysis and Descriptive Writing. Your personalized plan includes 5 carefully curated tasks totaling 2 hours and 55 minutes of focused study. Let's strengthen your analytical skills and creative writing together!`);
+
+    setLoading(false);
   };
 
   const getGreeting = () => {
