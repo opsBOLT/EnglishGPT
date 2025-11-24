@@ -106,7 +106,7 @@ const Landing = () => {
               }}
               className="mt-8 py-4 text-center text-4xl font-medium tracking-tight text-black md:text-7xl -translate-y-[10%]"
             >
-              Never Worry About IGCSE English Again
+              Never worry about IGCSE English again
             </motion.h1>
           </div>
         </div>
