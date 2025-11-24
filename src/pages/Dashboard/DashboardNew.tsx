@@ -297,41 +297,6 @@ const DashboardNew = () => {
           </motion.div>
         </div>
 
-        {/* Stats Cards */}
-        {studyPlan && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="grid grid-cols-1 md:grid-cols-4 gap-4"
-          >
-            <StatCard
-              label="Target Grade"
-              value={studyPlan.target_grade}
-              icon={<Target className="w-5 h-5" />}
-              color="#aa08f3"
-            />
-            <StatCard
-              label="Weekly Hours"
-              value={`${studyPlan.weekly_hours}h`}
-              icon={<Clock className="w-5 h-5" />}
-              color="#3b82f6"
-            />
-            <StatCard
-              label="Today's Tasks"
-              value={tasks.length.toString()}
-              icon={<CheckCircle2 className="w-5 h-5" />}
-              color="#10b981"
-            />
-            <StatCard
-              label="Focus Areas"
-              value={studyPlan.plan_data?.keyFocusAreas?.length || 0}
-              icon={<TrendingUp className="w-5 h-5" />}
-              color="#f59e0b"
-            />
-          </motion.div>
-        )}
-
         {/* Tasks Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -403,6 +368,41 @@ const DashboardNew = () => {
             </div>
           </motion.div>
         )}
+
+        {/* Stats Cards */}
+        {studyPlan && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.5 }}
+            className="grid grid-cols-1 md:grid-cols-4 gap-4"
+          >
+            <StatCard
+              label="Target Grade"
+              value={studyPlan.target_grade}
+              icon={<Target className="w-5 h-5" />}
+              color="#aa08f3"
+            />
+            <StatCard
+              label="Weekly Hours"
+              value={`${studyPlan.weekly_hours}h`}
+              icon={<Clock className="w-5 h-5" />}
+              color="#3b82f6"
+            />
+            <StatCard
+              label="Today's Tasks"
+              value={tasks.length.toString()}
+              icon={<CheckCircle2 className="w-5 h-5" />}
+              color="#10b981"
+            />
+            <StatCard
+              label="Focus Areas"
+              value={studyPlan.plan_data?.keyFocusAreas?.length || 0}
+              icon={<TrendingUp className="w-5 h-5" />}
+              color="#f59e0b"
+            />
+          </motion.div>
+        )}
       </div>
     </MainLayout>
   );
@@ -448,12 +448,9 @@ const TaskCard = ({ task, color, icon }: TaskCardProps) => (
         {task.duration}
       </span>
     </div>
-    <h3 className="text-lg font-bold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-2">
+    <h3 className="text-lg font-bold sulphur-point-bold text-slate-900 dark:text-slate-100">
       {task.title}
     </h3>
-    <p className="text-sm sulphur-point-regular text-slate-600 dark:text-slate-400 line-clamp-3">
-      {task.description}
-    </p>
   </div>
 );
 
