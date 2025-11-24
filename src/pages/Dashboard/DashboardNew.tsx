@@ -9,6 +9,8 @@ import XScroll from '../../components/ui/x-scroll';
 import { motion } from 'framer-motion';
 import { BookOpen, Clock, Target, TrendingUp, Calendar, CheckCircle2 } from 'lucide-react';
 import SnowballSpinner from '../../components/SnowballSpinner';
+import { AIInputWithLoading } from '../../components/ui/ai-input-with-loading';
+import { callOpenRouter, Message } from '../../services/openrouter';
 
 interface StudyPlan {
   id: string;
@@ -28,6 +30,11 @@ interface Task {
   completed: boolean;
 }
 
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 const DashboardNew = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
@@ -36,6 +43,8 @@ const DashboardNew = () => {
   const [studyPlan, setStudyPlan] = useState<StudyPlan | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [aiMessage, setAiMessage] = useState('');
+  const [hasVisitedBefore, setHasVisitedBefore] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -53,7 +62,24 @@ const DashboardNew = () => {
     try {
       setLoading(true);
 
-      // Load active study plan
+      const { data: visitData } = await supabase
+        .from('user_metadata')
+        .select('dashboard_visits')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (visitData && visitData.dashboard_visits > 0) {
+        setHasVisitedBefore(true);
+      }
+
+      await supabase
+        .from('user_metadata')
+        .upsert({
+          user_id: user.id,
+          dashboard_visits: (visitData?.dashboard_visits || 0) + 1,
+          last_visit: new Date().toISOString()
+        });
+
       const { data: planData, error: planError } = await supabase
         .from('study_plans')
         .select('*')
@@ -253,6 +279,41 @@ const DashboardNew = () => {
     return <Icon className="w-5 h-5" />;
   };
 
+  const handleAIChatSubmit = async (message: string) => {
+    if (!studyPlan) return;
+
+    setChatMessages(prev => [...prev, { role: 'user', content: message }]);
+
+    try {
+      const taskContext = tasks.map(t => `${t.title} (${t.category}, ${t.duration})`).join(', ');
+      const focusAreas = studyPlan.plan_data?.keyFocusAreas?.join(', ') || 'general studies';
+
+      const messages: Message[] = [
+        {
+          role: 'system',
+          content: `You are a helpful IGCSE English study assistant. The student has a study plan targeting grade ${studyPlan.target_grade} with ${studyPlan.weekly_hours} hours per week. Today's tasks include: ${taskContext}. Key focus areas: ${focusAreas}. Provide concise, actionable advice to help them succeed.`
+        },
+        ...chatMessages.map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        })),
+        {
+          role: 'user',
+          content: message
+        }
+      ];
+
+      const response = await callOpenRouter(messages, false);
+      setChatMessages(prev => [...prev, { role: 'assistant', content: response.content }]);
+    } catch (error) {
+      console.error('[Dashboard] AI chat error:', error);
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.'
+      }]);
+    }
+  };
+
   if (loading) {
     return (
       <MainLayout>
@@ -266,7 +327,7 @@ const DashboardNew = () => {
   return (
     <MainLayout>
       <div className="space-y-8 pb-12">
-        {/* Header with AI Orb and Explanation */}
+        {/* Header with AI Orb and Info/Chat */}
         <div className="grid grid-cols-1 lg:grid-cols-[auto,1fr] gap-8 items-start">
           {/* AI Orb */}
           <motion.div
@@ -282,19 +343,63 @@ const DashboardNew = () => {
             />
           </motion.div>
 
-          {/* AI Explanation */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-xl"
-          >
-            <TextGenerateEffect
-              words={aiMessage}
-              duration={0.3}
-              className="sulphur-point-regular text-2xl"
-            />
-          </motion.div>
+          {/* AI Explanation or Chat */}
+          {!hasVisitedBefore ? (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+              className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-xl"
+            >
+              <TextGenerateEffect
+                words={aiMessage}
+                duration={0.3}
+                className="sulphur-point-regular text-2xl"
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+              className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-xl"
+            >
+              <h2 className="text-2xl font-bold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-4">
+                Chat with your AI Study Assistant
+              </h2>
+              <div className="space-y-4 mb-4 max-h-[300px] overflow-y-auto">
+                {chatMessages.length === 0 ? (
+                  <p className="text-slate-600 dark:text-slate-400 sulphur-point-regular">
+                    Ask me anything about your study plan, tasks, or IGCSE English topics!
+                  </p>
+                ) : (
+                  chatMessages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-4 rounded-2xl ${
+                        msg.role === 'user'
+                          ? 'bg-slate-100 dark:bg-slate-700 ml-8'
+                          : 'bg-slate-50 dark:bg-slate-800 mr-8'
+                      }`}
+                    >
+                      <p className="text-sm font-semibold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-1">
+                        {msg.role === 'user' ? 'You' : 'AI Assistant'}
+                      </p>
+                      <p className="text-sm sulphur-point-regular text-slate-700 dark:text-slate-300">
+                        {msg.content}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+              <AIInputWithLoading
+                placeholder="Ask about your study plan..."
+                onSubmit={handleAIChatSubmit}
+                loadingDuration={3000}
+                className="py-0"
+              />
+            </motion.div>
+          )}
         </div>
 
         {/* Tasks Section */}
