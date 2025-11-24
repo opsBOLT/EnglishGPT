@@ -9,47 +9,47 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Geist Font Classes */
-.geist-light {
-  font-family: "Geist", sans-serif;
+/* Shantell Sans Font Classes */
+.shantell-light {
+  font-family: "Shantell Sans", cursive;
   font-weight: 300;
   font-style: normal;
 }
 
-.geist-regular {
-  font-family: "Geist", sans-serif;
+.shantell-regular {
+  font-family: "Shantell Sans", cursive;
   font-weight: 400;
   font-style: normal;
 }
 
-.geist-bold {
-  font-family: "Geist", sans-serif;
+.shantell-bold {
+  font-family: "Shantell Sans", cursive;
   font-weight: 700;
   font-style: normal;
 }
 
 /* Legacy font classes for compatibility */
 .sulphur-point-light {
-  font-family: "Geist", sans-serif;
+  font-family: "Shantell Sans", cursive;
   font-weight: 300;
   font-style: normal;
 }
 
 .sulphur-point-regular {
-  font-family: "Geist", sans-serif;
+  font-family: "Shantell Sans", cursive;
   font-weight: 400;
   font-style: normal;
 }
 
 .sulphur-point-bold {
-  font-family: "Geist", sans-serif;
+  font-family: "Shantell Sans", cursive;
   font-weight: 700;
   font-style: normal;
 }
 
-/* Apply Geist as default font */
+/* Apply Shantell Sans as default font */
 html, body {
-  font-family: "Geist", sans-serif;
+  font-family: "Shantell Sans", cursive;
   font-weight: 400;
 }
 
