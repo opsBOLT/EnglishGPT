@@ -326,9 +326,9 @@ const DashboardNew = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-8 pb-12">
+      <div className="space-y-6 sm:space-y-8 pb-8 sm:pb-12 px-4 sm:px-6 lg:px-8">
         {/* Header with AI Orb and Info/Chat */}
-        <div className="grid grid-cols-1 lg:grid-cols-[auto,1fr] gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[auto,1fr] gap-4 sm:gap-6 lg:gap-8 items-start">
           {/* AI Orb */}
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
@@ -337,9 +337,9 @@ const DashboardNew = () => {
             className="flex justify-center lg:justify-start"
           >
             <SiriOrb
-              size="160px"
+              size="120px"
               animationDuration={15}
-              className="drop-shadow-2xl"
+              className="drop-shadow-2xl sm:w-[140px] lg:w-[160px]"
             />
           </motion.div>
 
@@ -349,12 +349,12 @@ const DashboardNew = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-xl"
+              className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200 dark:border-slate-700 shadow-xl"
             >
               <TextGenerateEffect
                 words={aiMessage}
                 duration={0.3}
-                className="sulphur-point-regular text-2xl"
+                className="sulphur-point-regular text-lg sm:text-xl lg:text-2xl"
               />
             </motion.div>
           ) : (
@@ -362,24 +362,24 @@ const DashboardNew = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-xl"
+              className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200 dark:border-slate-700 shadow-xl"
             >
-              <h2 className="text-2xl font-bold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-3 sm:mb-4">
                 Chat with your AI Study Assistant
               </h2>
-              <div className="space-y-4 mb-4 max-h-[300px] overflow-y-auto">
+              <div className="space-y-3 sm:space-y-4 mb-3 sm:mb-4 max-h-[250px] sm:max-h-[300px] overflow-y-auto">
                 {chatMessages.length === 0 ? (
-                  <p className="text-slate-600 dark:text-slate-400 sulphur-point-regular">
+                  <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 sulphur-point-regular">
                     Ask me anything about your study plan, tasks, or IGCSE English topics!
                   </p>
                 ) : (
                   chatMessages.map((msg, idx) => (
                     <div
                       key={idx}
-                      className={`p-4 rounded-2xl ${
+                      className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl ${
                         msg.role === 'user'
-                          ? 'bg-slate-100 dark:bg-slate-700 ml-8'
-                          : 'bg-slate-50 dark:bg-slate-800 mr-8'
+                          ? 'bg-slate-100 dark:bg-slate-700 ml-4 sm:ml-8'
+                          : 'bg-slate-50 dark:bg-slate-800 mr-4 sm:mr-8'
                       }`}
                     >
                       <p className="text-sm font-semibold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-1">
@@ -407,9 +407,9 @@ const DashboardNew = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9 }}
-          className="space-y-4"
+          className="space-y-3 sm:space-y-4"
         >
-          <h2 className="text-2xl font-bold sulphur-point-bold text-slate-900 dark:text-slate-100">
+          <h2 className="text-xl sm:text-2xl font-bold sulphur-point-bold text-slate-900 dark:text-slate-100">
             Today's Tasks
           </h2>
 
@@ -429,8 +429,8 @@ const DashboardNew = () => {
               </div>
             </XScroll>
           ) : (
-            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-3xl p-12 border border-slate-200 dark:border-slate-700 text-center">
-              <p className="text-lg text-slate-600 dark:text-slate-400 sulphur-point-regular">
+            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-12 border border-slate-200 dark:border-slate-700 text-center">
+              <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 sulphur-point-regular">
                 No tasks scheduled for today. Enjoy your break or start studying ahead!
               </p>
             </div>
@@ -443,25 +443,25 @@ const DashboardNew = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2 }}
-            className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-lg"
+            className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200 dark:border-slate-700 shadow-lg"
           >
-            <h2 className="text-2xl font-bold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-4 sm:mb-6">
               Your Study Plan
             </h2>
-            <div className="space-y-4">
-              <p className="text-lg sulphur-point-regular text-slate-700 dark:text-slate-300">
+            <div className="space-y-3 sm:space-y-4">
+              <p className="text-base sm:text-lg sulphur-point-regular text-slate-700 dark:text-slate-300">
                 {studyPlan.plan_data.overview}
               </p>
               {studyPlan.plan_data.keyFocusAreas && (
                 <div>
-                  <h3 className="text-lg font-bold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-2">
+                  <h3 className="text-base sm:text-lg font-bold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-2">
                     Key Focus Areas
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {studyPlan.plan_data.keyFocusAreas.map((area: string, idx: number) => (
                       <span
                         key={idx}
-                        className="px-4 py-2 rounded-full text-sm font-semibold sulphur-point-bold"
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold sulphur-point-bold"
                         style={{ backgroundColor: '#aa08f3', color: 'white' }}
                       >
                         {area}
@@ -480,7 +480,7 @@ const DashboardNew = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.5 }}
-            className="grid grid-cols-1 md:grid-cols-4 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
           >
             <StatCard
               label="Target Grade"
@@ -521,14 +521,14 @@ interface StatCardProps {
 }
 
 const StatCard = ({ label, value, icon, color }: StatCardProps) => (
-  <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-lg">
+  <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-700 shadow-lg">
     <div className="flex items-center justify-between mb-2">
       <p className="text-sm font-semibold sulphur-point-bold text-slate-600 dark:text-slate-400">
         {label}
       </p>
       <div style={{ color }}>{icon}</div>
     </div>
-    <p className="text-3xl font-bold sulphur-point-bold" style={{ color }}>
+    <p className="text-2xl sm:text-3xl font-bold sulphur-point-bold" style={{ color }}>
       {value}
     </p>
   </div>
@@ -542,18 +542,18 @@ interface TaskCardProps {
 
 const TaskCard = ({ task, color, icon }: TaskCardProps) => (
   <div
-    className="min-w-[320px] bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-2xl p-6 border-2 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+    className="min-w-[280px] sm:min-w-[320px] bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
     style={{ borderColor: color }}
   >
-    <div className="flex items-start justify-between mb-4">
-      <div className="p-3 rounded-xl" style={{ backgroundColor: color + '20', color }}>
+    <div className="flex items-start justify-between mb-3 sm:mb-4">
+      <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl" style={{ backgroundColor: color + '20', color }}>
         {icon}
       </div>
-      <span className="text-sm font-semibold sulphur-point-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+      <span className="text-xs sm:text-sm font-semibold sulphur-point-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
         {task.duration}
       </span>
     </div>
-    <h3 className="text-lg font-bold sulphur-point-bold text-slate-900 dark:text-slate-100">
+    <h3 className="text-base sm:text-lg font-bold sulphur-point-bold text-slate-900 dark:text-slate-100">
       {task.title}
     </h3>
   </div>
