@@ -52,6 +52,7 @@ const Navbar1 = () => {
               <Link
                 to={item.href}
                 className="text-sm text-gray-900 hover:text-gray-600 transition-colors font-medium"
+                style={{ fontFamily: '"Sulphur Point", sans-serif' }}
               >
                 {item.name}
               </Link>
@@ -116,6 +117,7 @@ const Navbar1 = () => {
                   <Link
                     to={item.href}
                     className="text-base text-gray-900 font-medium"
+                    style={{ fontFamily: '"Sulphur Point", sans-serif' }}
                     onClick={toggleMenu}
                   >
                     {item.name}

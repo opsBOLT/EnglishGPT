@@ -104,7 +104,7 @@ const Landing = () => {
                 duration: 0.8,
                 ease: "easeInOut",
               }}
-              style={{ fontFamily: 'Geist, sans-serif' }}
+              style={{ fontFamily: '"Sulphur Point", sans-serif' }}
               className="mt-8 py-4 text-center text-4xl font-medium tracking-tight text-black md:text-7xl -translate-y-[10%]"
             >
               Never Worry About IGCSE English Again
