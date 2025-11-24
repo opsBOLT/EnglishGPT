@@ -23,7 +23,7 @@ const ProtectedRoute = ({ children, requireOnboarding = true }: ProtectedRoutePr
   }
 
   if (requireOnboarding && !user.onboarding_completed) {
-    return <Navigate to="/onboarding" />;
+    return <Navigate to={`/onboarding/${user.id}`} />;
   }
 
   return <>{children}</>;

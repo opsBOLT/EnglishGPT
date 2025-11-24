@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { PixelAnimation } from '../../components/PixelAnimation';
-import { evaluateEssayPublic } from '../../services/markingClient';
+import { evaluateEssayPublic, EvaluateResult } from '../../services/markingClient';
 import SnowballSpinner from '../../components/SnowballSpinner';
 
 interface OnboardingData {
@@ -23,6 +23,7 @@ const Onboarding = () => {
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
   const { user, updateProfile } = useAuth();
   const navigate = useNavigate();
+  const { userId } = useParams();
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<OnboardingData>({
@@ -36,6 +37,12 @@ const Onboarding = () => {
   });
 
   const totalSteps = 5;
+
+  useEffect(() => {
+    if (user?.id && userId && user.id !== userId) {
+      navigate(`/onboarding/${user.id}`, { replace: true });
+    }
+  }, [user?.id, userId, navigate]);
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -54,25 +61,41 @@ const Onboarding = () => {
   const handleComplete = async () => {
     if (!user) return;
 
+    if (!formData.weaknessQuestionType || !formData.weaknessEssay.trim()) {
+      setError('Select a question type and paste your response so we can mark it.');
+      return;
+    }
+
     setError(null);
     setLoading(true);
 
     try {
-      let markingResult = null;
+      const markingResult = await evaluateEssayPublic({
+        questionType: formData.weaknessQuestionType,
+        essay: formData.weaknessEssay,
+      });
 
-      if (formData.weaknessQuestionType && formData.weaknessEssay) {
-        try {
-          markingResult = await evaluateEssayPublic({
-            questionType: formData.weaknessQuestionType,
-            essay: formData.weaknessEssay,
-          });
-        } catch (err) {
-          setError('Failed to mark the essay. Please try again.');
-          setLoading(false);
-          return;
-        }
-      }
+      await persistOnboarding(markingResult);
 
+      navigate(`/onboarding/${user.id}/result`, {
+        state: {
+          result: markingResult,
+          essay: formData.weaknessEssay,
+          questionType: formData.weaknessQuestionType,
+        },
+      });
+    } catch (err) {
+      console.error('[onboarding] Marking failed', err);
+      setError('Failed to mark the essay. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const persistOnboarding = async (markingResult: EvaluateResult) => {
+    if (!user) return;
+
+    try {
       const { error } = await supabase.from('onboarding_responses').insert({
         user_id: user.id,
         reading_skill: formData.readingSkill,
@@ -102,12 +125,9 @@ const Onboarding = () => {
       if (progressError) {
         // Ignore seeding errors so onboarding flow can complete.
       }
-
-      navigate('/dashboard');
     } catch (error) {
+      console.error('[onboarding] Failed to persist onboarding', error);
       setError('Failed to save your onboarding. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -209,7 +229,7 @@ const Onboarding = () => {
     <div className="min-h-screen relative flex items-center justify-center overflow-hidden">
       {loading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/85 backdrop-blur-md">
-          <SnowballSpinner size="lg" label="Generating your study plan" />
+          <SnowballSpinner size="lg" label="Marking your response..." />
         </div>
       )}
       {/* Pixel Animation Background */}
@@ -484,14 +504,18 @@ const Onboarding = () => {
               ) : (
                 <button
                   onClick={handleComplete}
-                  disabled={loading}
+                  disabled={
+                    loading ||
+                    !formData.weaknessQuestionType ||
+                    !formData.weaknessEssay.trim()
+                  }
                   className="px-8 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-110 disabled:opacity-50 sulphur-point-bold"
                   style={{
                     backgroundColor: '#aa08f3',
                     color: 'white',
                   }}
                 >
-                  {loading ? 'Generating your study plan...' : 'Complete Setup'}
+                  {loading ? 'Marking your response...' : 'Mark this response'}
                 </button>
               )}
             </div>

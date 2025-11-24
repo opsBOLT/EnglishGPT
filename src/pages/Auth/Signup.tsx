@@ -11,7 +11,7 @@ const Signup = () => {
 
   useEffect(() => {
     if (user && isSigningUp.current) {
-      navigate('/onboarding');
+      navigate(`/onboarding/${user.id}`);
       isSigningUp.current = false;
     }
   }, [user, navigate]);

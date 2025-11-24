@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Landing from './pages/Landing/Landing';
 import Signup from './pages/Auth/Signup';
 import Onboarding from './pages/Onboarding/Onboarding';
+import OnboardingResult from './pages/Onboarding/OnboardingResult';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Study from './pages/Study/Study';
 import StudySession from './pages/StudySession';
@@ -11,6 +12,8 @@ import Practice from './pages/Practice/Practice';
 import PracticeSession from './pages/PracticeSession';
 import Calendar from './pages/Calendar/Calendar';
 import Analytics from './pages/Analytics/Analytics';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function App() {
   return (
@@ -24,7 +27,25 @@ function App() {
             path="/onboarding"
             element={
               <ProtectedRoute requireOnboarding={false}>
+                <OnboardingRedirect />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/onboarding/:userId"
+            element={
+              <ProtectedRoute requireOnboarding={false}>
                 <Onboarding />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/onboarding/:userId/result"
+            element={
+              <ProtectedRoute requireOnboarding={false}>
+                <OnboardingResult />
               </ProtectedRoute>
             }
           />
@@ -108,6 +129,19 @@ function StudySessionWithAuth() {
 function PracticeSessionWithAuth() {
   const { user } = useAuth();
   return <PracticeSession userId={user?.id || ''} />;
+}
+
+function OnboardingRedirect() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.id) {
+      navigate(`/onboarding/${user.id}`, { replace: true });
+    }
+  }, [user?.id, navigate]);
+
+  return null;
 }
 
 export default App;

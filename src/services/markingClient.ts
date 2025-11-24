@@ -9,21 +9,22 @@ type EvaluateParams = {
 };
 
 export type EvaluateResult = {
-  id: string;
-  user_id: string;
-  question_type: string;
-  student_response: string;
-  timestamp: string;
-  full_chat: string | null;
-  text_type?: string | null;
-  marking_scheme?: string | null;
-  total_score?: number | null;
-  max_score?: number | null;
   feedback: string;
   grade: string;
-  improvement_suggestions: string[];
-  strengths: string[];
-  next_steps: string[];
+  improvements?: string[];
+  improvement_suggestions?: string[];
+  strengths?: string[];
+  next_steps?: string[];
+  id?: string;
+  user_id?: string;
+  question_type?: string;
+  student_response?: string;
+  timestamp?: string;
+  full_chat?: string | null;
+  text_type?: string | null;
+  marking_scheme?: string | null;
+  total_score?: number | string | null;
+  max_score?: number | string | null;
   content_structure_marks?: number | string | null;
   style_accuracy_marks?: number | string | null;
   reading_marks?: number | string | null;
@@ -32,6 +33,13 @@ export type EvaluateResult = {
   ao2_marks?: number | string | null;
   ao3_marks?: number | string | null;
   short_id?: string;
+};
+
+type EvaluatePostbackEnvelope = {
+  endpoint: string;
+  status: 'success';
+  status_code: 200;
+  data: EvaluateResult;
 };
 
 const API_URL = import.meta.env.VITE_ENGLISHGPT_API_URL || 'https://englishgpt.everythingenglish.xyz';
@@ -157,7 +165,70 @@ export async function evaluateEssayPublic(params: EvaluateParams): Promise<Evalu
     throw new Error(`Marking API error ${resp.status}: ${text || resp.statusText}`);
   }
 
-  const json = (await resp.json()) as EvaluateResult;
-  console.debug('[markingClient] Evaluate API success', json);
-  return json;
+  const json = await resp.json();
+  const normalized = normalizeEvaluateResponse(json);
+  if (!normalized) {
+    console.error('[markingClient] Evaluate API returned unexpected shape', json);
+    throw new Error('Marking API returned an unexpected response.');
+  }
+
+  console.debug('[markingClient] Evaluate API success', normalized);
+  return normalized;
+}
+
+/**
+ * Accepts either the direct evaluate response or the postback envelope the
+ * server sends to the Referer URL. Returns a normalized EvaluateResult or
+ * null if the payload is not recognizable.
+ */
+export function normalizeEvaluateResponse(body: unknown): EvaluateResult | null {
+  const payload = isPostbackEnvelope(body) ? body.data : body;
+
+  if (isEvaluateResult(payload)) {
+    const improvementList =
+      (Array.isArray(payload.improvement_suggestions) && payload.improvement_suggestions.length
+        ? payload.improvement_suggestions
+        : undefined) ??
+      (Array.isArray(payload.improvements) && payload.improvements.length ? payload.improvements : undefined);
+
+    return {
+      ...payload,
+      improvement_suggestions: improvementList ?? payload.improvement_suggestions,
+      improvements: improvementList ?? payload.improvements,
+    };
+  }
+
+  console.warn('[markingClient] Unknown evaluate response shape', body);
+  return null;
+}
+
+function isPostbackEnvelope(body: unknown): body is EvaluatePostbackEnvelope {
+  const candidate = body as Partial<EvaluatePostbackEnvelope>;
+  return (
+    !!candidate &&
+    candidate.status === 'success' &&
+    candidate.status_code === 200 &&
+    typeof candidate.endpoint === 'string' &&
+    !!candidate.data &&
+    isEvaluateResult(candidate.data)
+  );
+}
+
+function isEvaluateResult(body: unknown): body is EvaluateResult {
+  if (!body || typeof body !== 'object') return false;
+  const candidate = body as Partial<EvaluateResult>;
+
+  if (typeof candidate.feedback !== 'string' || typeof candidate.grade !== 'string') {
+    return false;
+  }
+
+  const arrayFields = ['improvements', 'improvement_suggestions', 'strengths', 'next_steps'] as const;
+  for (const field of arrayFields) {
+    const value = candidate[field];
+    if (value !== undefined && !(Array.isArray(value) && value.every(item => typeof item === 'string'))) {
+      return false;
+    }
+  }
+
+  return true;
 }
