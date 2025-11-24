@@ -5,7 +5,8 @@ import Landing from './pages/Landing/Landing';
 import Signup from './pages/Auth/Signup';
 import Onboarding from './pages/Onboarding/Onboarding';
 import OnboardingResult from './pages/Onboarding/OnboardingResult';
-import Dashboard from './pages/Dashboard/Dashboard';
+import Dashboard from './pages/Dashboard/DashboardNew';
+import StudyPlanGeneration from './pages/StudyPlanGeneration';
 import Study from './pages/Study/Study';
 import StudySession from './pages/StudySession';
 import Practice from './pages/Practice/Practice';
@@ -111,6 +112,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <Analytics />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/study-plan/generate"
+            element={
+              <ProtectedRoute>
+                <StudyPlanGeneration />
               </ProtectedRoute>
             }
           />

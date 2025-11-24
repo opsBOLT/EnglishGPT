@@ -1,0 +1,333 @@
+import { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
+import MainLayout from '../../components/Layout/MainLayout';
+import SiriOrb from '../../components/ui/siri-orb';
+import { TextGenerateEffect } from '../../components/ui/text-generate-effect';
+import XScroll from '../../components/ui/x-scroll';
+import { motion } from 'framer-motion';
+import { BookOpen, Clock, Target, TrendingUp, Calendar, CheckCircle2 } from 'lucide-react';
+import SnowballSpinner from '../../components/SnowballSpinner';
+
+interface StudyPlan {
+  id: string;
+  plan_data: any;
+  target_grade: string;
+  weekly_hours: number;
+  is_active: boolean;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  duration: string;
+  day: string;
+  completed: boolean;
+}
+
+const DashboardNew = () => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [studyPlan, setStudyPlan] = useState<StudyPlan | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [aiMessage, setAiMessage] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      loadDashboardData();
+    }
+  }, [user]);
+
+  const loadDashboardData = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+
+      // Load active study plan
+      const { data: planData, error: planError } = await supabase
+        .from('study_plans')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (planError) throw planError;
+
+      setStudyPlan(planData);
+
+      // Extract today's tasks
+      if (planData && planData.plan_data) {
+        const dayOfWeek = new Date().getDay();
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const todayName = dayNames[dayOfWeek];
+
+        const currentWeek = planData.plan_data.weeks?.[0];
+        const todaySchedule = currentWeek?.daily_tasks?.find((d: any) => d.day === todayName);
+
+        if (todaySchedule && todaySchedule.tasks) {
+          const taskList: Task[] = todaySchedule.tasks.map((task: any, idx: number) => ({
+            id: `task-${idx}`,
+            title: task.title || 'Study Task',
+            description: task.description || '',
+            category: task.category || 'paper1',
+            duration: task.duration || '30 min',
+            day: todayName,
+            completed: false,
+          }));
+          setTasks(taskList);
+        }
+
+        // Generate AI message
+        const greeting = getGreeting();
+        const focusArea = planData.plan_data.keyFocusAreas?.[0] || 'your studies';
+        setAiMessage(`${greeting}, ${user.full_name || 'learner'}. Today we're focusing on ${focusArea}. Let's make progress together!`);
+      } else {
+        setAiMessage(`Welcome back, ${user.full_name || 'learner'}! Ready to start your learning journey?`);
+      }
+    } catch (error) {
+      console.error('[Dashboard] Failed to load data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      paper1: '#3b82f6',
+      paper2: '#10b981',
+      vocabulary: '#f59e0b',
+      examples: '#ec4899',
+      text_types: '#8b5cf6',
+    };
+    return colors[category] || '#aa08f3';
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const icons: Record<string, any> = {
+      paper1: BookOpen,
+      paper2: Target,
+      vocabulary: TrendingUp,
+      examples: CheckCircle2,
+      text_types: Calendar,
+    };
+    const Icon = icons[category] || BookOpen;
+    return <Icon className="w-5 h-5" />;
+  };
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-screen">
+          <SnowballSpinner size="lg" label="Loading your dashboard..." />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  return (
+    <MainLayout>
+      <div className="space-y-8 pb-12">
+        {/* Header with AI Orb and Explanation */}
+        <div className="grid grid-cols-1 lg:grid-cols-[auto,1fr] gap-8 items-start">
+          {/* AI Orb */}
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6, type: 'spring' }}
+            className="flex justify-center lg:justify-start"
+          >
+            <SiriOrb
+              size="160px"
+              animationDuration={15}
+              className="drop-shadow-2xl"
+            />
+          </motion.div>
+
+          {/* AI Explanation */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-xl"
+          >
+            <TextGenerateEffect
+              words={aiMessage}
+              duration={0.3}
+              className="sulphur-point-regular text-2xl"
+            />
+          </motion.div>
+        </div>
+
+        {/* Stats Cards */}
+        {studyPlan && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="grid grid-cols-1 md:grid-cols-4 gap-4"
+          >
+            <StatCard
+              label="Target Grade"
+              value={studyPlan.target_grade}
+              icon={<Target className="w-5 h-5" />}
+              color="#aa08f3"
+            />
+            <StatCard
+              label="Weekly Hours"
+              value={`${studyPlan.weekly_hours}h`}
+              icon={<Clock className="w-5 h-5" />}
+              color="#3b82f6"
+            />
+            <StatCard
+              label="Today's Tasks"
+              value={tasks.length.toString()}
+              icon={<CheckCircle2 className="w-5 h-5" />}
+              color="#10b981"
+            />
+            <StatCard
+              label="Focus Areas"
+              value={studyPlan.plan_data?.keyFocusAreas?.length || 0}
+              icon={<TrendingUp className="w-5 h-5" />}
+              color="#f59e0b"
+            />
+          </motion.div>
+        )}
+
+        {/* Tasks Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+          className="space-y-4"
+        >
+          <h2 className="text-2xl font-bold sulphur-point-bold text-slate-900 dark:text-slate-100">
+            Today's Tasks
+          </h2>
+
+          {tasks.length > 0 ? (
+            <XScroll>
+              <div className="flex gap-4 p-2 pb-6">
+                {tasks.map((task, index) => (
+                  <motion.div
+                    key={task.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 1 + index * 0.1 }}
+                  >
+                    <TaskCard task={task} color={getCategoryColor(task.category)} icon={getCategoryIcon(task.category)} />
+                  </motion.div>
+                ))}
+              </div>
+            </XScroll>
+          ) : (
+            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-3xl p-12 border border-slate-200 dark:border-slate-700 text-center">
+              <p className="text-lg text-slate-600 dark:text-slate-400 sulphur-point-regular">
+                No tasks scheduled for today. Enjoy your break or start studying ahead!
+              </p>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Study Plan Overview */}
+        {studyPlan && studyPlan.plan_data && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2 }}
+            className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-lg"
+          >
+            <h2 className="text-2xl font-bold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-6">
+              Your Study Plan
+            </h2>
+            <div className="space-y-4">
+              <p className="text-lg sulphur-point-regular text-slate-700 dark:text-slate-300">
+                {studyPlan.plan_data.overview}
+              </p>
+              {studyPlan.plan_data.keyFocusAreas && (
+                <div>
+                  <h3 className="text-lg font-bold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-2">
+                    Key Focus Areas
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {studyPlan.plan_data.keyFocusAreas.map((area: string, idx: number) => (
+                      <span
+                        key={idx}
+                        className="px-4 py-2 rounded-full text-sm font-semibold sulphur-point-bold"
+                        style={{ backgroundColor: '#aa08f3', color: 'white' }}
+                      >
+                        {area}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </MainLayout>
+  );
+};
+
+interface StatCardProps {
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color: string;
+}
+
+const StatCard = ({ label, value, icon, color }: StatCardProps) => (
+  <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-lg">
+    <div className="flex items-center justify-between mb-2">
+      <p className="text-sm font-semibold sulphur-point-bold text-slate-600 dark:text-slate-400">
+        {label}
+      </p>
+      <div style={{ color }}>{icon}</div>
+    </div>
+    <p className="text-3xl font-bold sulphur-point-bold" style={{ color }}>
+      {value}
+    </p>
+  </div>
+);
+
+interface TaskCardProps {
+  task: Task;
+  color: string;
+  icon: React.ReactNode;
+}
+
+const TaskCard = ({ task, color, icon }: TaskCardProps) => (
+  <div
+    className="min-w-[320px] bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-2xl p-6 border-2 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+    style={{ borderColor: color }}
+  >
+    <div className="flex items-start justify-between mb-4">
+      <div className="p-3 rounded-xl" style={{ backgroundColor: color + '20', color }}>
+        {icon}
+      </div>
+      <span className="text-sm font-semibold sulphur-point-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+        {task.duration}
+      </span>
+    </div>
+    <h3 className="text-lg font-bold sulphur-point-bold text-slate-900 dark:text-slate-100 mb-2">
+      {task.title}
+    </h3>
+    <p className="text-sm sulphur-point-regular text-slate-600 dark:text-slate-400 line-clamp-3">
+      {task.description}
+    </p>
+  </div>
+);
+
+export default DashboardNew;

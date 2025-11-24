@@ -160,7 +160,22 @@ const OnboardingResult = () => {
             </div>
             <div className="flex gap-3">
               <button
-                onClick={() => navigate('/study')}
+                onClick={() => {
+                  // Navigate to study plan generation with onboarding data
+                  navigate('/study-plan/generate', {
+                    state: {
+                      onboardingData: {
+                        readingSkill: 'B',
+                        writingSkill: 'B',
+                        analysisSkill: 'B',
+                        examStruggles: state?.examStruggles || [],
+                        markingResult: resolvedResult,
+                        weaknessQuestionType: resolvedQuestionType || '',
+                        weaknessEssay: resolvedEssay || '',
+                      },
+                    },
+                  });
+                }}
                 className="px-5 py-3 rounded-xl font-bold sulphur-point-bold border border-slate-200 hover:border-slate-300 transition-colors"
                 style={{ color: accent }}
               >
