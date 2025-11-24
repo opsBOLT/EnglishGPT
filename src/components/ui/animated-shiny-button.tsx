@@ -62,7 +62,7 @@ export function AnimatedShinyButton({
           cursor: pointer;
           outline-offset: 4px;
           padding: 0.75rem 1.5rem;
-          font-family: "Sulphur Point", sans-serif;
+          font-family: "Shantell Sans", cursive;
           font-size: 1rem;
           line-height: 1.2;
           font-weight: 500;
