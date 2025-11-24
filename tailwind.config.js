@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Sulphur Point"', 'sans-serif'],
+        sans: ['"Geist"', 'sans-serif'],
       },
       colors: {
         primary: {

@@ -9,28 +9,47 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Sulphur Point Font Classes */
+/* Geist Font Classes */
+.geist-light {
+  font-family: "Geist", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.geist-regular {
+  font-family: "Geist", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.geist-bold {
+  font-family: "Geist", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* Legacy font classes for compatibility */
 .sulphur-point-light {
-  font-family: "Sulphur Point", sans-serif;
+  font-family: "Geist", sans-serif;
   font-weight: 300;
   font-style: normal;
 }
 
 .sulphur-point-regular {
-  font-family: "Sulphur Point", sans-serif;
+  font-family: "Geist", sans-serif;
   font-weight: 400;
   font-style: normal;
 }
 
 .sulphur-point-bold {
-  font-family: "Sulphur Point", sans-serif;
+  font-family: "Geist", sans-serif;
   font-weight: 700;
   font-style: normal;
 }
 
-/* Apply Sulphur Point as default font */
+/* Apply Geist as default font */
 html, body {
-  font-family: "Sulphur Point", sans-serif;
+  font-family: "Geist", sans-serif;
   font-weight: 400;
 }
 
