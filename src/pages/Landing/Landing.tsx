@@ -34,7 +34,7 @@ const Landing = () => {
 
         <div className="pointer-events-none absolute inset-x-0 top-[70vh] flex justify-center z-30">
           <AnimatedShinyHero className="pointer-events-auto shadow-[0_16px_48px_rgba(170,128,243,0.35)] text-sm sm:text-base">
-            The AI that understands. The AI that guides you through IGCSE English
+            The best learning decision you'll ever make
           </AnimatedShinyHero>
         </div>
 
@@ -104,7 +104,6 @@ const Landing = () => {
                 duration: 0.8,
                 ease: "easeInOut",
               }}
-              style={{ fontFamily: '"Sulphur Point", sans-serif' }}
               className="mt-8 py-4 text-center text-4xl font-medium tracking-tight text-black md:text-7xl -translate-y-[10%]"
             >
               Never Worry About IGCSE English Again

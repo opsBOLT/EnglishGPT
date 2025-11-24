@@ -61,7 +61,7 @@ export function AnimatedShinyHero({
           cursor: pointer;
           outline-offset: 4px;
           padding: 0.75rem 1.5rem;
-          font-family: "Sulphur Point", sans-serif;
+          font-family: "Shantell Sans", cursive;
           font-size: 1rem;
           line-height: 1.2;
           font-weight: 500;
@@ -251,7 +251,7 @@ export function AnimatedShinyHero({
 export default function HeroShinyDemo() {
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <AnimatedShinyHero>IGCSE English Resources, Past Papers, Revision Guides and a Personalised AI Learning Experience</AnimatedShinyHero>
+      <AnimatedShinyHero>The best learning decision you'll ever make</AnimatedShinyHero>
     </div>
   );
 }
