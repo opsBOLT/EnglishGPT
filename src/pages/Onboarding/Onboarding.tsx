@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { PixelAnimation } from '../../components/PixelAnimation';
 import { evaluateEssayPublic } from '../../services/markingClient';
+import SnowballSpinner from '../../components/SnowballSpinner';
 
 interface OnboardingData {
   readingSkill: 'A' | 'B' | 'C' | 'D' | '';
@@ -22,6 +23,7 @@ const Onboarding = () => {
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
   const { user, updateProfile } = useAuth();
   const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<OnboardingData>({
     readingSkill: '',
@@ -52,6 +54,7 @@ const Onboarding = () => {
   const handleComplete = async () => {
     if (!user) return;
 
+    setError(null);
     setLoading(true);
 
     try {
@@ -204,6 +207,11 @@ const Onboarding = () => {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center overflow-hidden">
+      {loading && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/85 backdrop-blur-md">
+          <SnowballSpinner size="lg" label="Generating your study plan" />
+        </div>
+      )}
       {/* Pixel Animation Background */}
       <div className="absolute inset-0 z-0">
         <PixelAnimation
@@ -278,6 +286,14 @@ const Onboarding = () => {
               animation: direction === 'forward' ? 'slideInRight 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'slideInLeft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}
           >
+            {error && (
+              <div
+                className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 sulphur-point-regular"
+                style={{ animation: 'fadeInUp 0.5s ease-out backwards' }}
+              >
+                {error}
+              </div>
+            )}
             {content?.type === 'single' && content.options && (
               <div className="space-y-3">
                 {(content.options as { value: string; label: string }[]).map((option, index) => (
@@ -475,7 +491,7 @@ const Onboarding = () => {
                     color: 'white',
                   }}
                 >
-                  {loading ? 'Creating your plan...' : 'Complete Setup'}
+                  {loading ? 'Generating your study plan...' : 'Complete Setup'}
                 </button>
               )}
             </div>

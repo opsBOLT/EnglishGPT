@@ -12,6 +12,7 @@ import { getCategoryById, type StudyCategory } from '../config/studyContent';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Loader2, Send, Play, Pause, X, CheckCircle } from 'lucide-react';
+import SnowballSpinner from '../components/SnowballSpinner';
 
 interface StudySessionProps {
   userId: string; // Pass from auth context
@@ -189,7 +190,11 @@ export function StudySession({ userId }: StudySessionProps) {
   };
 
   if (!categoryConfig) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <SnowballSpinner size="md" label="Loading your study session..." />
+      </div>
+    );
   }
 
   const currentSection = categoryConfig.sections[currentSectionIndex];

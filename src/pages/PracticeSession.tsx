@@ -10,6 +10,7 @@ import { usePracticeSession } from '../hooks/useStudyPlatform';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Loader2, Send, CheckCircle, AlertCircle, ArrowRight, Home } from 'lucide-react';
+import SnowballSpinner from '../components/SnowballSpinner';
 
 interface PracticeSessionProps {
   userId: string; // From auth context
@@ -135,7 +136,7 @@ export function PracticeSession({ userId }: PracticeSessionProps) {
   if (questions.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        <SnowballSpinner size="md" label="Preparing your practice session..." />
       </div>
     );
   }

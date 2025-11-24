@@ -9,6 +9,7 @@ import TodaysTasks from './components/TodaysTasks';
 import TaskStatusGauge from './components/TaskStatusGauge';
 import ModuleOverview from './components/ModuleOverview';
 import { DailyTask, StudentProgress } from '../../types';
+import SnowballSpinner from '../../components/SnowballSpinner';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -157,7 +158,7 @@ const Dashboard = () => {
     return (
       <MainLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="w-12 h-12 border-4 border-[#aa80f3] border-t-transparent rounded-full animate-spin"></div>
+          <SnowballSpinner size="md" label="Loading your dashboard..." />
         </div>
       </MainLayout>
     );
