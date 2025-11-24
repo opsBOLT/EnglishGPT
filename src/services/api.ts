@@ -4,13 +4,6 @@
  */
 
 import { supabase } from '../lib/supabase';
-import {
-  generateStudyPlan,
-  analyzeStudySession,
-  studySessionChat,
-  markPracticeAnswer,
-  generatePersonalizedPractice,
-} from './ai-agents';
 import type { Database } from '../types/supabase';
 
 type StudentAssessment = Database['public']['Tables']['student_assessment']['Insert'];
@@ -44,38 +37,11 @@ export async function submitAssessment(
 
 /**
  * Generate and save AI study plan
+ * NOTE: This function is deprecated. Use the new study plan generation flow via /study-plan/generate
  */
 export async function createStudyPlan(userId: string): Promise<{ success: boolean; plan?: any; error?: string }> {
-  try {
-    // Get assessment data
-    const { data: assessment, error: fetchError } = await supabase
-      .from('student_assessment')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (fetchError || !assessment) {
-      throw new Error('Assessment not found. Please complete the initial assessment first.');
-    }
-
-    // Generate plan using AI
-    const plan = await generateStudyPlan(assessment);
-
-    // Save plan to database
-    const { error: saveError } = await supabase
-      .from('study_plan')
-      .upsert({
-        user_id: userId,
-        plan_data: plan as any,
-      });
-
-    if (saveError) throw saveError;
-
-    return { success: true, plan };
-  } catch (error) {
-    console.error('Error creating study plan:', error);
-    return { success: false, error: (error as Error).message };
-  }
+  console.warn('createStudyPlan is deprecated. Use the new OpenRouter-based study plan generation.');
+  return { success: false, error: 'This function is deprecated. Use the new study plan generation flow.' };
 }
 
 /**
@@ -159,6 +125,7 @@ export async function updateStudySession(
 
 /**
  * Complete study session and trigger AI analysis
+ * NOTE: AI analysis temporarily disabled. Sessions are saved without analysis.
  */
 export async function completeStudySession(
   sessionId: string,
@@ -176,80 +143,8 @@ export async function completeStudySession(
       throw new Error('Session not found');
     }
 
-    // Only analyze sessions longer than 30 minutes
-    if (!session.duration_minutes || session.duration_minutes < 30) {
-      return { success: true };
-    }
-
-    // Analyze session with AI
-    const analysis = await analyzeStudySession(session);
-
-    // Update session with identified weak topics
-    const { error: updateError } = await supabase
-      .from('study_sessions')
-      .update({
-        weak_topics_identified: analysis.weak_topics,
-      })
-      .eq('id', sessionId);
-
-    if (updateError) throw updateError;
-
-    // Save insights to AI memory
-    const memoryEntries: AIMemory[] = [];
-
-    // Add weak topics
-    analysis.weak_topics.forEach(topic => {
-      memoryEntries.push({
-        user_id: userId,
-        memory_type: 'weak_topic',
-        content: topic,
-        confidence_score: 0.7,
-        source_session_id: sessionId,
-      });
-    });
-
-    // Add preferred methods
-    analysis.preferred_methods.forEach(method => {
-      memoryEntries.push({
-        user_id: userId,
-        memory_type: 'preferred_method',
-        content: method,
-        confidence_score: 0.6,
-        source_session_id: sessionId,
-      });
-    });
-
-    // Add misconceptions
-    analysis.misconceptions.forEach(misconception => {
-      memoryEntries.push({
-        user_id: userId,
-        memory_type: 'misconception',
-        content: misconception,
-        confidence_score: 0.8,
-        source_session_id: sessionId,
-      });
-    });
-
-    // Add strengths
-    analysis.strengths.forEach(strength => {
-      memoryEntries.push({
-        user_id: userId,
-        memory_type: 'strength',
-        content: strength,
-        confidence_score: 0.7,
-        source_session_id: sessionId,
-      });
-    });
-
-    if (memoryEntries.length > 0) {
-      const { error: memoryError } = await supabase
-        .from('ai_memory')
-        .insert(memoryEntries);
-
-      if (memoryError) console.error('Error saving AI memory:', memoryError);
-    }
-
-    return { success: true, analysis };
+    // Session completed successfully without AI analysis
+    return { success: true };
   } catch (error) {
     console.error('Error completing study session:', error);
     return { success: false, error: (error as Error).message };
@@ -258,6 +153,7 @@ export async function completeStudySession(
 
 /**
  * Chat with study session AI
+ * NOTE: Temporarily returns a placeholder. Integrate with OpenRouter for chat functionality.
  */
 export async function chatWithStudyAI(
   userId: string,
@@ -266,20 +162,7 @@ export async function chatWithStudyAI(
   conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>
 ): Promise<{ response?: string; error?: string }> {
   try {
-    // Get user's weak topics from AI memory
-    const { data: memory } = await supabase
-      .from('ai_memory')
-      .select('content')
-      .eq('user_id', userId)
-      .eq('memory_type', 'weak_topic')
-      .order('confidence_score', { ascending: false })
-      .limit(5);
-
-    const weakTopics = memory?.map(m => m.content) || [];
-
-    const response = await studySessionChat(message, category, conversationHistory, weakTopics);
-
-    return { response };
+    return { response: 'AI chat is being updated. Please check back soon!' };
   } catch (error) {
     console.error('Error in study AI chat:', error);
     return { error: (error as Error).message };
@@ -288,6 +171,7 @@ export async function chatWithStudyAI(
 
 /**
  * Submit practice answer for AI marking
+ * NOTE: Use markingClient.ts for marking functionality
  */
 export async function submitPracticeAnswer(
   userId: string,
@@ -297,9 +181,7 @@ export async function submitPracticeAnswer(
   questionType: string
 ): Promise<{ result?: any; error?: string }> {
   try {
-    const result = await markPracticeAnswer(question, answer, maxMarks, questionType);
-
-    return { result };
+    return { result: null, error: 'Use markingClient.ts for marking functionality' };
   } catch (error) {
     console.error('Error marking practice answer:', error);
     return { error: (error as Error).message };
@@ -315,40 +197,7 @@ export async function createPracticeSession(
   paperId?: string
 ): Promise<{ sessionId?: string; questions?: any; error?: string }> {
   try {
-    let questions = null;
-
-    // Generate personalized practice if requested
-    if (practiceType === 'personalized') {
-      // Get weak topics and recent performance
-      const { data: memory } = await supabase
-        .from('ai_memory')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      const { data: recentSessions } = await supabase
-        .from('practice_sessions')
-        .select('total_grade')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      const weakTopics = memory
-        ?.filter(m => m.memory_type === 'weak_topic')
-        .map(m => m.content) || [];
-
-      const recentScores = recentSessions
-        ?.filter(s => s.total_grade !== null)
-        .map(s => s.total_grade as number) || [];
-
-      questions = await generatePersonalizedPractice(
-        weakTopics,
-        memory || [],
-        recentScores
-      );
-    }
-
-    // Create practice session
+    // Create practice session without AI-generated questions for now
     const { data, error } = await supabase
       .from('practice_sessions')
       .insert({
@@ -361,7 +210,7 @@ export async function createPracticeSession(
 
     if (error) throw error;
 
-    return { sessionId: data.id, questions };
+    return { sessionId: data.id, questions: null };
   } catch (error) {
     console.error('Error creating practice session:', error);
     return { error: (error as Error).message };
