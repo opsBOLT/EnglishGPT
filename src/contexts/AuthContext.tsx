@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase, supabaseMissingEnv } from '../lib/supabase';
 import { User } from '../types';
@@ -28,6 +28,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const profileFetchInFlight = useRef(false);
+  const lastProfileUserId = useRef<string | null>(null);
 
   useEffect(() => {
     if (supabaseMissingEnv) {
@@ -35,21 +37,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      } else {
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (session && isSessionExpired(session)) {
+          supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        setSession(session);
+        if (session?.user) {
+          fetchUserProfile(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      })
+      .catch(() => {
         setLoading(false);
-      }
-    }).catch((error) => {
-      setLoading(false);
-    });
+      });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const eventName = event as string;
+
+      if (eventName === 'TOKEN_REFRESH_FAILED') {
+        console.error('[auth] token refresh failed, signing out to stop retry loop');
+        supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        setLoading(false);
+        return;
+      }
+
       setSession(session);
       if (session?.user) {
-        fetchUserProfile(session.user.id);
+        const shouldFetchProfile =
+          eventName === 'SIGNED_IN' ||
+          eventName === 'TOKEN_REFRESHED' ||
+          eventName === 'USER_UPDATED';
+
+        if (session && isSessionExpired(session)) {
+          supabase.auth.signOut();
+          setUser(null);
+          setSession(null);
+          setLoading(false);
+          return;
+        }
+
+        if (shouldFetchProfile) {
+          fetchUserProfile(session.user.id);
+        }
       } else {
         setUser(null);
         setLoading(false);
@@ -60,6 +98,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const fetchUserProfile = async (userId: string) => {
+    if (profileFetchInFlight.current && lastProfileUserId.current === userId) {
+      return;
+    }
+
+    profileFetchInFlight.current = true;
     try {
       const { data, error } = await supabase
         .from('users')
@@ -97,10 +140,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setUser(data);
       }
+      lastProfileUserId.current = userId;
     } catch (error) {
-      setUser(null);
+      console.error('[auth] Failed to fetch user profile, falling back to auth user', error);
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+
+      if (authUser) {
+        setUser({
+          id: authUser.id,
+          email: authUser.email || '',
+          full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+          onboarding_completed: false,
+          created_at: authUser.created_at || new Date().toISOString(),
+        });
+      } else {
+        setUser(null);
+      }
     } finally {
       setLoading(false);
+      profileFetchInFlight.current = false;
     }
   };
 
@@ -185,4 +243,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+const isSessionExpired = (session: Session) => {
+  const expiresAt = session.expires_at;
+  if (!expiresAt) return false;
+  const now = Math.floor(Date.now() / 1000);
+  return expiresAt < now;
 };

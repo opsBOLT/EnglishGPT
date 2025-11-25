@@ -10,6 +10,7 @@ type StudentAssessment = Database['public']['Tables']['student_assessment']['Ins
 type StudySession = Database['public']['Tables']['study_sessions'];
 type PracticeSession = Database['public']['Tables']['practice_sessions'];
 type AIMemory = Database['public']['Tables']['ai_memory']['Insert'];
+type StudyPlanRow = Database['public']['Tables']['study_plan']['Insert'];
 
 /**
  * Submit student initial assessment
@@ -31,6 +32,28 @@ export async function submitAssessment(
     return { success: true };
   } catch (error) {
     console.error('Error submitting assessment:', error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+/**
+ * Persist the onboarding conversation summary for a user.
+ */
+export async function saveOnboardingSummary(userId: string, summary: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('student_assessment') // reuse this table to keep summary alongside assessment; adjust if a dedicated table is added
+      .upsert({
+        user_id: userId,
+        // store summary in struggle_reasons for now; this column exists and is nullable text
+        struggle_reasons: summary,
+        // leave other fields untouched
+      }, { onConflict: 'user_id' });
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving onboarding summary:', error);
     return { success: false, error: (error as Error).message };
   }
 }

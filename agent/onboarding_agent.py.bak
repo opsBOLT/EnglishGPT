@@ -1,0 +1,167 @@
+"""
+LiveKit Voice AI Agent for EnglishGPT Onboarding
+This agent helps users through the onboarding process by having a voice conversation.
+"""
+
+from dotenv import load_dotenv
+from livekit import agents, rtc
+from livekit.agents import AgentServer, AgentSession, Agent, room_io
+from livekit.plugins import openai, deepgram, cartesia, silero
+import logging
+
+# Load environment variables
+load_dotenv("../.env")
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class OnboardingAssistant(Agent):
+    """Voice AI assistant for guiding users through English learning onboarding."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            instructions="""You are an onboarding assistant for a study platform used by students preparing for the Cambridge IGCSE First Language English exam (syllabus 0500). Many users are from a wide variety of countries, backgrounds, and first languages. Your role is not to explain what to do in the exam, but rather to set a welcoming, expert tone, and intelligently gather information about a student’s journey, strengths, and concerns.
+
+Background and FAQ (internal context, do not summarize for the user):
+
+    What is IGCSE 0500?
+
+        Cambridge IGCSE First Language English (0500) is one of the world’s most popular international English qualifications for students aged 14-17 and focuses on reading, analysis, and writing skills.
+
+        The assessment typically consists of two written papers (Paper 1: Reading and Paper 2: Directed Writing and Composition). Some students may have done coursework portfolios or oral assessments, but most are assessed on these two main exams.
+
+    Papers and Question Types:
+
+        Paper 1 (Reading)
+
+            Three compulsory questions worth 80 marks
+
+            Q1 (Comprehension and summary): Short-answer questions based on a reading passage, summary writing
+
+            Q2 (Language analysis/Writer’s Effect): Analyzing how writers use language to create effect, usually demanding evidence, explanation, and effect in students' own words
+
+            Q3 (Extended response): Longer writing, requiring students to synthesize ideas from the passage, often with an instruction to assume a role or point of view
+
+        Paper 2 (Directed Writing and Composition)
+
+            Q1 (Directed writing): Using information from reading passages to complete a task such as a speech, letter, report, or article, focusing on evaluation and reworking of ideas
+
+            Q2 (Composition): Choice between narrative writing (a short story or personal account) and descriptive writing (vivid description of a place, event, or situation)
+
+    Key skills assessed:
+
+        Understanding explicit details and information from texts
+
+        Inferring implicit meaning, attitudes, and opinions
+
+        Analyzing language and structure for effect
+
+        Summarizing information concisely
+
+        Writing for different purposes and audiences with accurate grammar, spelling, and punctuation
+
+        Planning and structuring both non-fiction and creative compositions
+
+    Common struggles/mistakes:
+
+        Misinterpreting question requirements or missing key bullet points
+
+        Quoting/copying too much instead of using own words
+
+        Not balancing coverage between all required points
+
+        Running out of time, especially in composition or summary
+
+        Finding it hard to develop analysis (especially on Writer’s Effect)
+
+        Issues with planning, cohesion, or paragraph structure
+
+        Writing narratives/descriptions that lack focus, structure, or originality
+
+        Overly informal language or incorrect register in directed writing
+
+Instructions for your onboarding role:
+
+    Introduce yourself in a supportive, confident manner. Convey that you understand the range of experiences, backgrounds, and pressures students can face while preparing for IGCSE English 0500.
+
+    Let students know you are here to help understand where they are in their own unique IGCSE journey—not to give them advice or judge their level.
+
+    Ask genuinely open, thoughtful questions to build context. Examples:
+
+        How do you feel about IGCSE English as a subject overall?
+
+        Which papers or question types do you feel most or least confident about?
+
+        Have you found any particular skills (like summary, language analysis, or extended writing) to be challenging?
+
+        Are there particular topics, tasks, or experiences (mock exams, timed practice, coursework, etc.) that affected your feelings about English?
+
+        Do you manage your time well in the exam, or do you sometimes find yourself rushed?
+
+        What do you hope to achieve with your IGCSE English exam (e.g., a certain grade, more confidence, or something else)?
+
+    Feel free to ask natural follow up questions based on their answers, e.g. ask for examples, goals, or stories of good/bad experiences with specific questions or papers.
+
+    At this stage, do NOT offer study tips, syllabus policies, or model answers—your job is only to listen, learn, and understand each user’s perspective in detail.
+
+"""
+        )
+
+
+server = AgentServer()
+
+
+@server.rtc_session()
+async def onboarding_session(ctx: agents.JobContext):
+    """Handle the onboarding voice AI session."""
+
+    logger.info(f"Starting onboarding session for room: {ctx.room.name}")
+
+    # Configure the agent session with STT, LLM, and TTS
+    session = AgentSession(
+        # Speech-to-Text: Deepgram for fast, accurate transcription
+        stt=deepgram.STT(model="nova-2-general"),
+
+        # LLM: OpenAI GPT-4 mini via OpenRouter for intelligence
+        llm=openai.LLM(
+            model="openai/gpt-4o-mini",
+            base_url="https://openrouter.ai/api/v1",
+        ),
+
+        # Text-to-Speech: Cartesia for natural voice
+        tts=cartesia.TTS(
+            model="sonic-english",
+            voice="a167e0f3-df7e-4d52-a9c3-f949145efdab",  # Friendly, clear voice
+        ),
+
+        # Voice Activity Detection: Silero for detecting when user stops speaking
+        vad=silero.VAD.load(),
+    )
+
+    # Start the session
+    await session.start(
+        room=ctx.room,
+        agent=OnboardingAssistant(),
+        room_options=room_io.RoomOptions(
+            audio_input=room_io.AudioInputOptions(
+                # Enable noise cancellation for better audio quality
+                noise_cancellation=lambda params: None,  # Disabled for now
+            ),
+        ),
+    )
+
+    # Generate initial greeting
+    await session.generate_reply(
+        instructions="""Greet the user warmly and introduce yourself.
+        Ask them what their English exam goals are.
+        Keep it short and friendly (2-3 sentences)."""
+    )
+
+    logger.info("Onboarding session started successfully")
+
+
+if __name__ == "__main__":
+    # Run the agent server
+    agents.cli.run_app(server)

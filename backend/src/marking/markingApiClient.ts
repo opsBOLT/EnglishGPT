@@ -24,7 +24,7 @@ export type EvaluateResponse = {
   short_id?: string;
 };
 
-const BASE_URL = process.env.PUBLIC_MARKING_API_BASE_URL || 'https://your-host';
+const BASE_URL = process.env.PUBLIC_MARKING_API_BASE_URL || 'https://englishgpt.everythingenglish.xyz';
 const API_URL = process.env.ENGLISHGPT_API_URL || process.env.PUBLIC_MARKING_API_BASE_URL || BASE_URL;
 const API_KEY = process.env.ENGLISHGPT_API_KEY || process.env.INTERNAL_API_KEY;
 

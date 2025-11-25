@@ -1,26 +1,18 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
 import CategorySelection from './components/CategorySelection';
-import StudyInterface from './components/StudyInterface';
+import type { StudyCategory } from '../../config/studyContent';
 
 const Study = () => {
-  const [searchParams] = useSearchParams();
-  const category = searchParams.get('category');
-  const [activeSession, setActiveSession] = useState<string | null>(null);
-  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleStart = (categoryId: StudyCategory | string) => {
+    navigate(`/study/session/${encodeURIComponent(categoryId)}`);
+  };
 
   return (
     <MainLayout>
-      {!category || !activeSession ? (
-        <CategorySelection
-          selectedCategory={category}
-          onStartSession={(sessionId) => setActiveSession(sessionId)}
-        />
-      ) : (
-        <StudyInterface sessionId={activeSession} category={category} />
-      )}
+      <CategorySelection onStartSession={handleStart} />
     </MainLayout>
   );
 };

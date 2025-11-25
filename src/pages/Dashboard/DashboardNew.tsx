@@ -10,7 +10,6 @@ import { motion } from 'framer-motion';
 import { BookOpen, Clock, Target, TrendingUp, Calendar, CheckCircle2 } from 'lucide-react';
 import SnowballSpinner from '../../components/SnowballSpinner';
 import { AIInputWithLoading } from '../../components/ui/ai-input-with-loading';
-import { callOpenRouter, Message } from '../../services/openrouter';
 
 interface StudyPlan {
   id: string;
@@ -32,6 +31,11 @@ interface Task {
 
 interface ChatMessage {
   role: 'user' | 'assistant';
+  content: string;
+}
+
+interface Message {
+  role: 'user' | 'assistant' | 'system';
   content: string;
 }
 
@@ -303,7 +307,10 @@ const DashboardNew = () => {
         }
       ];
 
-      const response = await callOpenRouter(messages, false);
+      // TODO: Implement AI chat with proper backend
+      const response = {
+        content: 'I\'m here to help with your IGCSE English studies! This feature is currently being updated.'
+      };
       setChatMessages(prev => [...prev, { role: 'assistant', content: response.content }]);
     } catch (error) {
       console.error('[Dashboard] AI chat error:', error);

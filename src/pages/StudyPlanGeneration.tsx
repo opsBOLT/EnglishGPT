@@ -1,12 +1,40 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { generateStudyPlan, StudyPlan, OnboardingData } from '../services/openrouter';
 import { supabase } from '../lib/supabase';
 import SiriOrb from '../components/ui/siri-orb';
 import { TextGenerateEffect } from '../components/ui/text-generate-effect';
 import { motion } from 'framer-motion';
 import { Loader } from 'lucide-react';
+
+interface OnboardingData {
+  readingSkill?: string;
+  writingSkill?: string;
+  analysisSkill?: string;
+  examStruggles?: string[];
+  markingResult?: any;
+  weaknessQuestionType?: string;
+  weaknessEssay?: string;
+}
+
+interface StudyPlan {
+  overview: string;
+  targets: {
+    target_grade: string;
+    time_frame_weeks: number;
+    weekly_hours: number;
+  };
+  diagnosis: string[];
+  strengths: string[];
+  weaknesses: string[];
+  priorities: string[];
+  weekly_plan: any[];
+  daily_micro_tasks: Record<string, string[]>;
+  exam_drills: string[];
+  feedback_loops: string[];
+  resources: string[];
+  reflection_prompts: string[];
+}
 
 const StudyPlanGeneration = () => {
   const navigate = useNavigate();
@@ -33,31 +61,25 @@ const StudyPlanGeneration = () => {
 
     try {
       setStatus('generating');
-      const generatedPlan = await generateStudyPlan(onboardingData);
+
+      const { data, error } = await supabase
+        .from('study_plan')
+        .select('plan_data')
+        .eq('user_id', user?.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data?.plan_data) throw new Error('No study plan found. Please redo onboarding.');
+
+      const generatedPlan = data.plan_data as StudyPlan;
       setPlan(generatedPlan);
 
-      // Save to database
-      const { error: dbError } = await supabase
-        .from('study_plans')
-        .insert({
-          user_id: user?.id,
-          plan_data: generatedPlan,
-          target_grade: generatedPlan.targetGrade,
-          weekly_hours: generatedPlan.weeklyHours,
-          is_active: true,
-        });
-
-      if (dbError) {
-        console.error('[StudyPlan] Failed to save to database:', dbError);
-      }
-
-      // Generate AI explanation
-      const explanation = `I've created your personalized ${generatedPlan.weeklyHours}-hour weekly study plan targeting a ${generatedPlan.targetGrade} grade. We'll focus on ${generatedPlan.keyFocusAreas.join(', ')}, with daily tasks designed to strengthen your weakest areas first.`;
-
+      const explanation = `Your personalized ${generatedPlan.targets.weekly_hours}-hour weekly plan (target: ${generatedPlan.targets.target_grade}, timeline: ${generatedPlan.targets.time_frame_weeks} weeks) is ready. It contains week-by-week drills, daily micro tasks, and checkpoints focused on your priority weaknesses.`;
       setAiExplanation(explanation);
       setStatus('success');
 
-      // Redirect to dashboard after 8 seconds
       setTimeout(() => {
         navigate('/dashboard');
       }, 8000);
@@ -130,34 +152,46 @@ const StudyPlanGeneration = () => {
               </div>
 
               <div className="grid grid-cols-3 gap-4 mt-8">
-                <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
-                  <p className="text-sm text-slate-600 dark:text-slate-400 sulphur-point-bold">Target Grade</p>
-                  <p className="text-4xl font-bold mt-2 sulphur-point-bold" style={{ color: '#aa08f3' }}>
-                    {plan.targetGrade}
-                  </p>
-                </div>
-                <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
-                  <p className="text-sm text-slate-600 dark:text-slate-400 sulphur-point-bold">Weekly Hours</p>
-                  <p className="text-4xl font-bold mt-2 sulphur-point-bold" style={{ color: '#aa08f3' }}>
-                    {plan.weeklyHours}h
-                  </p>
-                </div>
-                <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
-                  <p className="text-sm text-slate-600 dark:text-slate-400 sulphur-point-bold">Duration</p>
-                  <p className="text-4xl font-bold mt-2 sulphur-point-bold" style={{ color: '#aa08f3' }}>
-                    4w
-                  </p>
+                <InfoCard label="Target Grade" value={plan.targets.target_grade} />
+                <InfoCard label="Weekly Hours" value={`${plan.targets.weekly_hours}h`} />
+                <InfoCard label="Timeline" value={`${plan.targets.time_frame_weeks} weeks`} />
+              </div>
+
+              <Section title="Overview" items={[plan.overview]} />
+              <Section title="Diagnosis" items={plan.diagnosis} />
+              <Section title="Strengths" items={plan.strengths} />
+              <Section title="Weaknesses" items={plan.weaknesses} />
+              <Section title="Priorities" items={plan.priorities} />
+
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold sulphur-point-bold">Weekly Plan</h3>
+                <div className="space-y-3">
+                  {plan.weekly_plan.map((week, idx) => (
+                    <div key={idx} className="bg-white/70 dark:bg-slate-800/70 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
+                      <p className="text-sm sulphur-point-bold text-slate-500">
+                        Week {week.week_number}: {week.theme}
+                      </p>
+                      <GridList label="Goals" items={week.goals} />
+                      <GridList label="Focus Papers" items={week.focus_papers} />
+                      <GridList label="Writing Tasks" items={week.writing_tasks} />
+                      <GridList label="Reading Tasks" items={week.reading_tasks} />
+                      <GridList label="Drills" items={week.drills} />
+                      <GridList label="Checkpoints" items={week.checkpoints} />
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 3 }}
-                className="text-slate-600 dark:text-slate-400 sulphur-point-regular"
-              >
-                Redirecting to your dashboard...
-              </motion.p>
+              <Section
+                title="Daily Micro Tasks"
+                items={Object.entries(plan.daily_micro_tasks).map(
+                  ([day, tasks]) => `${day}: ${tasks.join('; ')}`
+                )}
+              />
+              <Section title="Exam Drills" items={plan.exam_drills} />
+              <Section title="Feedback Loops" items={plan.feedback_loops} />
+              <Section title="Resources" items={plan.resources} />
+              <Section title="Reflection Prompts" items={plan.reflection_prompts} />
             </motion.div>
           )}
 
@@ -189,3 +223,44 @@ const StudyPlanGeneration = () => {
 };
 
 export default StudyPlanGeneration;
+
+const InfoCard = ({ label, value }: { label: string; value: string }) => (
+  <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+    <p className="text-sm text-slate-600 dark:text-slate-400 sulphur-point-bold">{label}</p>
+    <p className="text-3xl font-bold mt-2 sulphur-point-bold" style={{ color: '#aa08f3' }}>
+      {value}
+    </p>
+  </div>
+);
+
+const Section = ({ title, items }: { title: string; items: string[] }) => {
+  if (!items || !items.length) return null;
+  return (
+    <div className="space-y-2 text-left">
+      <h3 className="text-xl font-bold sulphur-point-bold">{title}</h3>
+      <ul className="grid gap-2">
+        {items.map((item, idx) => (
+          <li key={idx} className="bg-white/70 dark:bg-slate-800/70 rounded-xl p-3 text-sm text-slate-700 dark:text-slate-200">
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+const GridList = ({ label, items }: { label: string; items: string[] }) => {
+  if (!items || !items.length) return null;
+  return (
+    <div className="mt-2">
+      <p className="text-xs uppercase tracking-wide sulphur-point-bold text-slate-500">{label}</p>
+      <ul className="grid gap-1 mt-1">
+        {items.map((item, idx) => (
+          <li key={idx} className="text-sm text-slate-700 dark:text-slate-200">
+            • {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};

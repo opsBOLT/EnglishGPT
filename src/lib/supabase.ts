@@ -9,4 +9,13 @@ export const supabaseMissingEnv = !supabaseUrl || !supabaseAnonKey;
 const clientUrl = supabaseUrl || 'https://placeholder.supabase.co';
 const clientKey = supabaseAnonKey || 'placeholder-anon-key';
 
-export const supabase = createClient(clientUrl, clientKey);
+// Disable auto token refresh to avoid repeated refresh-token calls when a bad/expired refresh token is cached.
+export const supabase = createClient(clientUrl, clientKey, {
+  auth: {
+    // Keep refresh on, we'll handle failures gracefully in AuthContext.
+    autoRefreshToken: true,
+    persistSession: true,
+    // Keep URL parsing on so Google OAuth callbacks are captured.
+    detectSessionInUrl: true,
+  },
+});
