@@ -6,10 +6,28 @@ const PORT = process.env.PORT || 3001;
 // Use X_API_KEY (OpenRouter/OpenAI compatible key) as primary, fall back to OPENAI_API_KEY if set.
 const OPENAI_API_KEY = process.env.X_API_KEY || process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
 
+// Allow localhost for dev and englishgpt.org for prod by default; override with ALLOWED_ORIGINS env (comma-separated).
+const DEFAULT_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://englishgpt.org',
+  'https://www.englishgpt.org',
+];
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean)
+  .concat(DEFAULT_ORIGINS);
+
 // Basic CORS for local dev (Vite runs on 5173 by default)
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Vary', 'Origin');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }

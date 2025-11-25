@@ -266,7 +266,8 @@ const Onboarding = () => {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const response = await fetch('/api/realtime/session', {
+      const sessionEndpoint = import.meta.env.VITE_REALTIME_SERVER_URL || '/api/realtime/session';
+      const response = await fetch(sessionEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/sdp' },
         body: offer.sdp || '',
