@@ -332,11 +332,9 @@ const Onboarding = () => {
       await pc.setLocalDescription(offer);
 
       const sessionConfig = JSON.stringify({
-        type: 'realtime',
         model: 'gpt-realtime-mini',
-        audio: {
-          output: { voice: 'alloy' },
-        },
+        modalities: ['audio', 'text'],
+        voice: 'alloy',
       });
 
       const fd = new FormData();
