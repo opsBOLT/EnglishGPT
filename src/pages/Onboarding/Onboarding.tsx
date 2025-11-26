@@ -337,10 +337,6 @@ const Onboarding = () => {
         audio: {
           output: { voice: 'alloy' },
         },
-        input_audio_transcription: {
-          enabled: true,
-          model: 'whisper-1',
-        },
       });
 
       const fd = new FormData();
@@ -351,6 +347,7 @@ const Onboarding = () => {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${OPENAI_API_KEY}`,
+          'OpenAI-Beta': 'realtime=v1',
         },
         body: fd,
       });
