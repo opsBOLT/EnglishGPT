@@ -4,9 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npm run dev:api & npm run dev:app",
+    "dev": "vite",
     "dev:app": "vite",
-    "dev:api": "node backend/realtime-server.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",

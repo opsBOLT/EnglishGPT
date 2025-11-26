@@ -9,6 +9,7 @@ import { saveOnboardingSummary } from '../../services/api';
 import { createDetailedStudyPlan } from '../../services/studyPlan';
 import SnowballSpinner from '../../components/SnowballSpinner';
 import SiriOrb from '../../components/ui/siri-orb';
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const SYSTEM_PROMPT = `You are an onboarding assistant for a study platform used by students preparing for the Cambridge IGCSE First Language English exam (syllabus 0500). Many users are from a wide variety of countries, backgrounds, and first languages. Your role is not to explain what to do in the exam, but rather to set a welcoming, expert tone, and intelligently gather information about a student’s journey, strengths, and concerns.
 
 Background and FAQ (internal context, do not summarize for the user):
@@ -181,6 +182,10 @@ const Onboarding = () => {
       setError('Please sign in to continue');
       return;
     }
+    if (!OPENAI_API_KEY) {
+      setError('Missing OpenAI API key');
+      return;
+    }
 
     teardownConnection();
     setConnectionStatus('connecting');
@@ -266,16 +271,29 @@ const Onboarding = () => {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const sessionEndpoint = import.meta.env.VITE_REALTIME_SERVER_URL || '/api/realtime/session';
-      const response = await fetch(sessionEndpoint, {
+      const sessionConfig = JSON.stringify({
+        type: 'realtime',
+        model: 'gpt-realtime-mini',
+        audio: {
+          output: { voice: 'alloy' },
+        },
+      });
+
+      const fd = new FormData();
+      fd.set('sdp', offer.sdp || '');
+      fd.set('session', sessionConfig);
+
+      const response = await fetch('https://api.openai.com/v1/realtime/calls', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/sdp' },
-        body: offer.sdp || '',
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: fd,
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('[realtime] session creation failed', response.status, errorText);
+        console.error('[realtime] session creation failed (OpenAI)', response.status, errorText);
         throw new Error('Failed to create Realtime session');
       }
 
