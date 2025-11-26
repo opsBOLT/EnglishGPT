@@ -229,6 +229,17 @@ const Onboarding = () => {
 
       dc.onopen = () => {
         console.log('[realtime] data channel open');
+
+        // Enable input audio transcription
+        const sessionUpdate = {
+          type: 'session.update',
+          session: {
+            input_audio_transcription: {
+              model: 'whisper-1',
+            },
+          },
+        };
+
         const systemMessage = {
           type: 'conversation.item.create',
           item: {
@@ -246,6 +257,8 @@ const Onboarding = () => {
           },
         };
         const startResponse = { type: 'response.create' };
+
+        dc.send(JSON.stringify(sessionUpdate));
         dc.send(JSON.stringify(systemMessage));
         dc.send(JSON.stringify(greetUser));
         dc.send(JSON.stringify(startResponse));
@@ -323,10 +336,6 @@ const Onboarding = () => {
         model: 'gpt-realtime-mini',
         audio: {
           output: { voice: 'alloy' },
-        },
-        input_audio_transcription: {
-          enabled: true,
-          model: 'whisper-1',
         },
       });
 
