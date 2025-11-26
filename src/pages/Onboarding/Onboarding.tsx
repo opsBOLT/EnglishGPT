@@ -337,6 +337,10 @@ const Onboarding = () => {
         audio: {
           output: { voice: 'alloy' },
         },
+        input_audio_transcription: {
+          enabled: true,
+          model: 'whisper-1',
+        },
       });
 
       const fd = new FormData();
@@ -440,7 +444,7 @@ const Onboarding = () => {
           'X-Title': 'EnglishGPT Onboarding',
         },
         body: JSON.stringify({
-          model: 'openai/gpt-4o-mini',
+          model: 'grok-4.1-fast',
           messages: [
             {
               role: 'system',
@@ -497,11 +501,10 @@ Format your response as follows:
       // Save summary to database
       await persistSummaryIfNeeded();
 
-      setAllowNext(true);
-
-      // End the session after summary is complete
-      console.log('[summary] Ending voice session...');
+      // End the session completely
       await disconnectFromRoom();
+
+      setAllowNext(true);
 
     } catch (error) {
       console.error('[summary] Failed to generate summary:', error);
@@ -509,7 +512,7 @@ Format your response as follows:
       setSummaryPending(false);
       setSummaryResponse('Failed to generate summary. Please try again.');
 
-      // Still disconnect even on error
+      // Still disconnect even if summary failed
       await disconnectFromRoom();
     }
   };
