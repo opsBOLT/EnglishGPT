@@ -1042,7 +1042,6 @@ Rules:
             'Paper 2 Q1 - Directed Writing',
             'Paper 2 Q2 - Narrative',
             'Paper 2 Q2 - Descriptive',
-            'I\'m not sure - I need help identifying them',
           ],
         };
       case 3:
