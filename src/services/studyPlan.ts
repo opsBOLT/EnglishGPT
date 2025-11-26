@@ -474,13 +474,13 @@ WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
         Authorization: `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_X_API_KEY || ''}`,
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.1-70b-instruct:free',
+        model: 'grok-4.1-fast',
         messages: [
           { role: 'system', content: 'Return only JSON. Do not include markdown fences.' },
           { role: 'user', content: prompt },
         ],
         temperature: 0.7,
-        max_tokens: 1500,
+        max_tokens: 4000,
       }),
     });
 
