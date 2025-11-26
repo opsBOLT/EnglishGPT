@@ -10,7 +10,8 @@ import { createDetailedStudyPlan } from '../../services/studyPlan';
 import SnowballSpinner from '../../components/SnowballSpinner';
 import SiriOrb from '../../components/ui/siri-orb';
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-const SYSTEM_PROMPT = `You are an onboarding assistant for a study platform used by students preparing for the Cambridge IGCSE First Language English exam (syllabus 0500). Many users are from a wide variety of countries, backgrounds, and first languages. Your role is not to explain what to do in the exam, but rather to set a welcoming, expert tone, and intelligently gather information about a student’s journey, strengths, and concerns.
+const ENGLISHGPT_GENERAL_API_KEY = import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY;
+const SYSTEM_PROMPT = `You are an onboarding assistant for a study platform used by students preparing for the Cambridge IGCSE First Language English exam (syllabus 0500). Many users are from a wide variety of countries, backgrounds, and first languages. Your role is not to explain what to do in the exam, but rather to set a welcoming, expert tone, and intelligently gather information about a student's journey, strengths, and concerns.
 
 Background and FAQ (internal context, do not summarize for the user):
 
@@ -120,6 +121,12 @@ interface OnboardingData {
   weaknessEssay: string;
 }
 
+interface TranscriptItem {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: number;
+}
+
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -152,6 +159,8 @@ const Onboarding = () => {
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const audioLevelIntervalRef = useRef<number | null>(null);
+  const [conversationTranscript, setConversationTranscript] = useState<TranscriptItem[]>([]);
+  const currentAssistantMessageRef = useRef<string>('');
 
   const totalSteps = 3;
 
@@ -167,6 +176,7 @@ const Onboarding = () => {
     pcRef.current = null;
     dcRef.current = null;
     localStreamRef.current = null;
+    currentAssistantMessageRef.current = '';
     setConnectedAt(null);
     setShowDoneButton(false);
     setSummaryPending(false);
@@ -175,6 +185,7 @@ const Onboarding = () => {
     setSummarySaveError(null);
     setIsConnected(false);
     setConnectionStatus('disconnected');
+    setConversationTranscript([]);
   };
 
   const connectToRealtime = async () => {
@@ -244,19 +255,55 @@ const Onboarding = () => {
         try {
           const payload = JSON.parse(event.data);
           console.log('[realtime] event', payload);
+
+          // Capture user audio transcription
+          if (payload.type === 'conversation.item.input_audio_transcription.completed') {
+            const userTranscript = payload.transcript || '';
+            if (userTranscript.trim()) {
+              setConversationTranscript(prev => [...prev, {
+                role: 'user',
+                content: userTranscript,
+                timestamp: Date.now(),
+              }]);
+            }
+          }
+
+          // Capture assistant text deltas
           if (payload.type?.includes('response.output_text.delta') && payload.delta) {
             if (summaryPending) {
               summaryRef.current = `${summaryRef.current}${payload.delta}`;
               setSummaryResponse(summaryRef.current);
             } else {
+              currentAssistantMessageRef.current += payload.delta;
               setAgentResponse(prev => `${prev}${payload.delta}`);
             }
           }
-          if (payload.type === 'response.output_text.done') {
+
+          // Capture assistant audio transcript deltas
+          if (payload.type === 'response.output_audio_transcript.delta' && payload.delta) {
+            if (!summaryPending) {
+              currentAssistantMessageRef.current += payload.delta;
+            }
+          }
+
+          // When assistant response is complete, save to transcript
+          if (payload.type === 'response.output_text.done' || payload.type === 'response.output_audio_transcript.done') {
             setFormData(prev => ({ ...prev, voiceIntroComplete: true }));
+
             if (summaryPending) {
               setSummaryPending(false);
               void persistSummaryIfNeeded();
+            } else {
+              // Save the complete assistant message to transcript
+              const assistantMessage = currentAssistantMessageRef.current.trim();
+              if (assistantMessage) {
+                setConversationTranscript(prev => [...prev, {
+                  role: 'assistant',
+                  content: assistantMessage,
+                  timestamp: Date.now(),
+                }]);
+              }
+              currentAssistantMessageRef.current = '';
             }
           }
         } catch (err) {
@@ -276,6 +323,10 @@ const Onboarding = () => {
         model: 'gpt-realtime-mini',
         audio: {
           output: { voice: 'alloy' },
+        },
+        input_audio_transcription: {
+          enabled: true,
+          model: 'whisper-1',
         },
       });
 
@@ -328,11 +379,27 @@ const Onboarding = () => {
     }
   };
 
-  const requestSummary = () => {
-    const dc = dcRef.current;
-    if (!dc || dc.readyState !== 'open') return;
+  // Helper function to build transcript text from conversation items
+  const buildTranscriptText = (): string => {
+    if (conversationTranscript.length === 0) {
+      return 'No conversation transcript available.';
+    }
 
-    // Mute the voice call so the summary happens silently in the background.
+    return conversationTranscript
+      .map(item => {
+        const roleLabel = item.role === 'user' ? 'Student' : 'AI Tutor';
+        return `${roleLabel}: ${item.content}`;
+      })
+      .join('\n\n');
+  };
+
+  const requestSummary = async () => {
+    if (!ENGLISHGPT_GENERAL_API_KEY) {
+      setError('Missing API key for summarization');
+      return;
+    }
+
+    // Mute the voice call
     localStreamRef.current?.getTracks().forEach(track => {
       track.enabled = false;
     });
@@ -341,27 +408,101 @@ const Onboarding = () => {
       remoteAudioRef.current.srcObject = null;
     }
 
-    // Ask the model to summarize what it learned about the user.
-    const summaryRequest = {
-      type: 'conversation.item.create',
-      item: {
-        type: 'message',
-        role: 'user',
-        content: [
-          {
-            type: 'input_text',
-            text: 'Please summarize our conversation in concise bullet points: goals, weaknesses, strengths, and any follow-up suggestions.',
-          },
-        ],
-      },
-    };
-    const startResponse = { type: 'response.create', response: { modalities: ['text'] } };
+    // Clear previous responses
+    setAgentResponse('');
     setSummaryResponse('');
     setSummaryPending(true);
     summaryRef.current = '';
-    dc.send(JSON.stringify(summaryRequest));
-    dc.send(JSON.stringify(startResponse));
-    setAllowNext(true);
+
+    try {
+      // Build transcript from captured conversation
+      const transcript = buildTranscriptText();
+
+      console.log('[summary] Transcript length:', transcript.length);
+      console.log('[summary] Sending to OpenRouter for analysis...');
+
+      // Call OpenRouter API with the transcript
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${ENGLISHGPT_GENERAL_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'EnglishGPT Onboarding',
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an expert educational analyst specializing in IGCSE First Language English (0500).
+Your task is to analyze conversation transcripts between students and an AI tutor to extract key information about the student's:
+1. Main academic goals and target grades
+2. Identified strengths in English skills
+3. Identified weaknesses and areas of concern
+4. Specific paper/question types they struggle with
+5. Any mentioned time management or exam strategy issues
+
+Provide a structured, concise summary that will be used to create a personalized study plan.`,
+            },
+            {
+              role: 'user',
+              content: `Please analyze this onboarding conversation transcript and provide a structured summary:
+
+${transcript}
+
+Format your response as follows:
+## Goals
+- [List the student's stated goals, target grades, and motivations]
+
+## Strengths
+- [List any mentioned strengths or confidence areas]
+
+## Weaknesses
+- [List specific weaknesses, struggling areas, and concerns]
+
+## Recommendations
+- [Provide 3-5 specific, actionable study recommendations based on their profile]`,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 1000,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[summary] OpenRouter API error:', response.status, errorText);
+        throw new Error(`Failed to generate summary: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const summary = data.choices[0]?.message?.content || 'Failed to generate summary.';
+
+      console.log('[summary] Summary generated successfully');
+
+      summaryRef.current = summary;
+      setSummaryResponse(summary);
+      setSummaryPending(false);
+
+      // Save summary to database
+      await persistSummaryIfNeeded();
+
+      setAllowNext(true);
+
+      // End the session after summary is complete
+      console.log('[summary] Ending voice session...');
+      await disconnectFromRoom();
+
+    } catch (error) {
+      console.error('[summary] Failed to generate summary:', error);
+      setError('Failed to generate conversation summary. Please try again.');
+      setSummaryPending(false);
+      setSummaryResponse('Failed to generate summary. Please try again.');
+
+      // Still disconnect even on error
+      await disconnectFromRoom();
+    }
   };
 
   const persistSummaryIfNeeded = async () => {
@@ -812,7 +953,7 @@ const Onboarding = () => {
                 </div>
 
                 {/* Agent Response Display */}
-                {agentResponse && (
+                {agentResponse && !summaryPending && !summaryResponse && (
                   <div
                     className="w-full px-6 py-4 rounded-2xl text-white text-center text-lg sulphur-point-regular"
                     style={{
@@ -822,6 +963,38 @@ const Onboarding = () => {
                     }}
                   >
                     {agentResponse}
+                  </div>
+                )}
+
+                {/* Summary Response Display */}
+                {summaryResponse && (
+                  <div
+                    className="w-full px-6 py-4 rounded-2xl text-white text-left text-sm sulphur-point-regular max-h-96 overflow-y-auto"
+                    style={{
+                      backgroundColor: 'rgba(8, 170, 243, 0.1)',
+                      border: '2px solid rgba(8, 170, 243, 0.3)',
+                      backdropFilter: 'blur(10px)',
+                    }}
+                  >
+                    <div className="prose prose-invert prose-sm max-w-none">
+                      {summaryResponse.split('\n').map((line, i) => (
+                        <p key={i} className="mb-2">{line}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Summary Loading State */}
+                {summaryPending && (
+                  <div
+                    className="w-full px-6 py-4 rounded-2xl text-white text-center text-lg sulphur-point-regular"
+                    style={{
+                      backgroundColor: 'rgba(8, 170, 243, 0.1)',
+                      border: '2px solid rgba(8, 170, 243, 0.3)',
+                      backdropFilter: 'blur(10px)',
+                    }}
+                  >
+                    Analyzing your conversation...
                   </div>
                 )}
 

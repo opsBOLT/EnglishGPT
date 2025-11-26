@@ -43,7 +43,7 @@ type EvaluatePostbackEnvelope = {
 };
 
 const API_URL = import.meta.env.VITE_ENGLISHGPT_API_URL || 'https://englishgpt.everythingenglish.xyz';
-const X_API_KEY =
+const VITE_ENGLISHGPT_API_KEY =
   import.meta.env.VITE_INTERNAL_API_KEY ||
   import.meta.env.VITE_ENGLISHGPT_API_KEY;
 
@@ -118,13 +118,8 @@ function resolveBackendQuestionType(questionType: string): string {
 }
 
 export async function evaluateEssayPublic(params: EvaluateParams): Promise<EvaluateResult> {
-  if (!X_API_KEY) {
-    console.error('[markingClient] Missing marking API key; set X_API_KEY or VITE_ENGLISHGPT_GENERAL_API_KEY.', {
-      has_X_API_KEY: !!import.meta.env.X_API_KEY,
-      has_VITE_ENGLISHGPT_GENERAL_API_KEY: !!import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY,
-      has_VITE_ENGLISHGPT_API_KEY: !!import.meta.env.VITE_ENGLISHGPT_API_KEY,
-    });
-    throw new Error('Missing marking API key');
+  if (!VITE_ENGLISHGPT_API_KEY) {
+    throw new Error('Missing API key for marking service');
   }
 
   const backendQuestionType = resolveBackendQuestionType(params.questionType);
@@ -148,13 +143,13 @@ export async function evaluateEssayPublic(params: EvaluateParams): Promise<Evalu
     },
     resolvedQuestionType: backendQuestionType,
   });
-  console.debug('[markingClient] Using API key source', { source: KEY_SOURCE, keyLength: X_API_KEY.length });
+  console.debug('[markingClient] Using API key source', { source: KEY_SOURCE, keyLength: VITE_ENGLISHGPT_API_KEY.length });
 
   const resp = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': X_API_KEY,
+      'x-api-key': VITE_ENGLISHGPT_API_KEY,
     },
     body: JSON.stringify(payload),
   });

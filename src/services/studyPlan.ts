@@ -471,7 +471,7 @@ WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_X_API_KEY || ''}`,
+        Authorization: `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY || ''}`,
       },
       body: JSON.stringify({
         model: 'grok-4.1-fast',
