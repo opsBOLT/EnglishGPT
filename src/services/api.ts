@@ -7,10 +7,6 @@ import { supabase } from '../lib/supabase';
 import type { Database } from '../types/supabase';
 
 type StudentAssessment = Database['public']['Tables']['student_assessment']['Insert'];
-type StudySession = Database['public']['Tables']['study_sessions'];
-type PracticeSession = Database['public']['Tables']['practice_sessions'];
-type AIMemory = Database['public']['Tables']['ai_memory']['Insert'];
-type StudyPlanRow = Database['public']['Tables']['study_plan']['Insert'];
 
 /**
  * Submit student initial assessment
@@ -37,23 +33,82 @@ export async function submitAssessment(
 }
 
 /**
- * Persist the onboarding conversation summary for a user.
+ * Parse AI notes section from the structured summary text.
+ * Expected format:
+ * ## Goals
+ * ...
+ * ## AI Notes
+ * paper1_reading_comprehension_ai_note: ...
+ * skill_vorpf_ai_note: ...
  */
-export async function saveOnboardingSummary(userId: string, summary: string): Promise<{ success: boolean; error?: string }> {
+function parseAINotesFromSummary(summaryText: string): {
+  summaryOnly: string;
+  aiNotes: Record<string, string>;
+} {
+  const aiNotesSection = summaryText.split('## AI Notes');
+
+  if (aiNotesSection.length < 2) {
+    // No AI notes section found, return entire text as summary
+    return { summaryOnly: summaryText, aiNotes: {} };
+  }
+
+  const summaryOnly = aiNotesSection[0].trim();
+  const aiNotesText = aiNotesSection[1].trim();
+
+  const aiNotes: Record<string, string> = {};
+  const lines = aiNotesText.split('\n');
+
+  for (const line of lines) {
+    const match = line.match(/^([a-z0-9_]+):\s*(.+)$/);
+    if (match) {
+      const [, key, value] = match;
+      const trimmedValue = value.trim();
+      // Only include if not "NO DATA"
+      if (trimmedValue && trimmedValue !== 'NO DATA') {
+        aiNotes[key] = trimmedValue;
+      }
+    }
+  }
+
+  return { summaryOnly, aiNotes };
+}
+
+/**
+ * Save onboarding summary by parsing the structured text into summary and AI notes.
+ * This is a convenience wrapper that handles the parsing automatically.
+ */
+export async function saveOnboardingSummary(
+  userId: string,
+  structuredSummaryText: string
+): Promise<{ success: boolean; error?: string }> {
+  const { summaryOnly, aiNotes } = parseAINotesFromSummary(structuredSummaryText);
+  return saveOnboardingSummaryAndNotes(userId, summaryOnly, aiNotes);
+}
+
+/**
+ * Persist the onboarding conversation summary and AI notes for a user.
+ * Use saveOnboardingSummary() if you have structured text that needs parsing.
+ */
+export async function saveOnboardingSummaryAndNotes(
+  userId: string,
+  summary: string,
+  aiNotes: Record<string, string>
+): Promise<{ success: boolean; error?: string }> {
   try {
+    const payload = {
+      user_id: userId,
+      onboarding_summary: summary,
+      ...aiNotes,
+    };
+
     const { error } = await supabase
-      .from('student_assessment') // reuse this table to keep summary alongside assessment; adjust if a dedicated table is added
-      .upsert({
-        user_id: userId,
-        // store summary in struggle_reasons for now; this column exists and is nullable text
-        struggle_reasons: summary,
-        // leave other fields untouched
-      }, { onConflict: 'user_id' });
+      .from('student_ai_notes')
+      .upsert(payload, { onConflict: 'user_id' });
 
     if (error) throw error;
     return { success: true };
   } catch (error) {
-    console.error('Error saving onboarding summary:', error);
+    console.error('Error saving onboarding summary and AI notes:', error);
     return { success: false, error: (error as Error).message };
   }
 }
@@ -62,7 +117,7 @@ export async function saveOnboardingSummary(userId: string, summary: string): Pr
  * Generate and save AI study plan
  * NOTE: This function is deprecated. Use the new study plan generation flow via /study-plan/generate
  */
-export async function createStudyPlan(userId: string): Promise<{ success: boolean; plan?: any; error?: string }> {
+export async function createStudyPlan(userId: string): Promise<{ success: boolean; plan?: unknown; error?: string }> {
   console.warn('createStudyPlan is deprecated. Use the new OpenRouter-based study plan generation.');
   return { success: false, error: 'This function is deprecated. Use the new study plan generation flow.' };
 }
@@ -70,7 +125,7 @@ export async function createStudyPlan(userId: string): Promise<{ success: boolea
 /**
  * Get user's study plan
  */
-export async function getStudyPlan(userId: string): Promise<{ plan?: any; error?: string }> {
+export async function getStudyPlan(userId: string): Promise<{ plan?: unknown; error?: string }> {
   try {
     const { data, error } = await supabase
       .from('study_plan')
@@ -126,7 +181,7 @@ export async function updateStudySession(
     duration_minutes?: number;
     quiz_correct?: number;
     quiz_incorrect?: number;
-    questions_asked_ai?: any[];
+    questions_asked_ai?: unknown[];
     notes_made?: string;
     revision_methods?: string[];
   }
@@ -153,7 +208,7 @@ export async function updateStudySession(
 export async function completeStudySession(
   sessionId: string,
   userId: string
-): Promise<{ success: boolean; analysis?: any; error?: string }> {
+): Promise<{ success: boolean; analysis?: unknown; error?: string }> {
   try {
     // Get session data
     const { data: session, error: fetchError } = await supabase
@@ -179,10 +234,10 @@ export async function completeStudySession(
  * NOTE: Temporarily returns a placeholder. Integrate with OpenRouter for chat functionality.
  */
 export async function chatWithStudyAI(
-  userId: string,
-  message: string,
-  category: string,
-  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>
+  _userId: string,
+  _message: string,
+  _category: string,
+  _conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>
 ): Promise<{ response?: string; error?: string }> {
   try {
     return { response: 'AI chat is being updated. Please check back soon!' };
@@ -197,12 +252,12 @@ export async function chatWithStudyAI(
  * NOTE: Use markingClient.ts for marking functionality
  */
 export async function submitPracticeAnswer(
-  userId: string,
-  question: string,
-  answer: string,
-  maxMarks: number,
-  questionType: string
-): Promise<{ result?: any; error?: string }> {
+  _userId: string,
+  _question: string,
+  _answer: string,
+  _maxMarks: number,
+  _questionType: string
+): Promise<{ result?: unknown; error?: string }> {
   try {
     return { result: null, error: 'Use markingClient.ts for marking functionality' };
   } catch (error) {
@@ -218,7 +273,7 @@ export async function createPracticeSession(
   userId: string,
   practiceType: 'personalized' | 'past_paper',
   paperId?: string
-): Promise<{ sessionId?: string; questions?: any; error?: string }> {
+): Promise<{ sessionId?: string; questions?: unknown; error?: string }> {
   try {
     // Create practice session without AI-generated questions for now
     const { data, error } = await supabase
@@ -245,7 +300,7 @@ export async function createPracticeSession(
  */
 export async function completePracticeSession(
   sessionId: string,
-  questionsData: any[],
+  questionsData: unknown[],
   totalGrade: number,
   weakPoints: string[]
 ): Promise<{ success: boolean; error?: string }> {
@@ -269,21 +324,22 @@ export async function completePracticeSession(
 }
 
 /**
- * Get AI memory for user
+ * Get AI notes for user
+ * Replaces the deprecated getAIMemory function
  */
-export async function getAIMemory(userId: string): Promise<{ memory?: any[]; error?: string }> {
+export async function getAINotes(userId: string): Promise<{ notes?: unknown; error?: string }> {
   try {
     const { data, error } = await supabase
-      .from('ai_memory')
+      .from('student_ai_notes')
       .select('*')
       .eq('user_id', userId)
-      .order('confidence_score', { ascending: false });
+      .maybeSingle();
 
     if (error) throw error;
 
-    return { memory: data };
+    return { notes: data };
   } catch (error) {
-    console.error('Error fetching AI memory:', error);
+    console.error('Error fetching AI notes:', error);
     return { error: (error as Error).message };
   }
 }
@@ -291,7 +347,7 @@ export async function getAIMemory(userId: string): Promise<{ memory?: any[]; err
 /**
  * Get user's assessment
  */
-export async function getAssessment(userId: string): Promise<{ assessment?: any; error?: string }> {
+export async function getAssessment(userId: string): Promise<{ assessment?: unknown; error?: string }> {
   try {
     const { data, error } = await supabase
       .from('student_assessment')
@@ -311,7 +367,7 @@ export async function getAssessment(userId: string): Promise<{ assessment?: any;
 /**
  * Get user's study sessions
  */
-export async function getStudySessions(userId: string, limit = 10): Promise<{ sessions?: any[]; error?: string }> {
+export async function getStudySessions(userId: string, limit = 10): Promise<{ sessions?: unknown[]; error?: string }> {
   try {
     const { data, error } = await supabase
       .from('study_sessions')
@@ -340,7 +396,7 @@ export async function getStudySessions(userId: string, limit = 10): Promise<{ se
 /**
  * Get user's practice sessions
  */
-export async function getPracticeSessions(userId: string, limit = 10): Promise<{ sessions?: any[]; error?: string }> {
+export async function getPracticeSessions(userId: string, limit = 10): Promise<{ sessions?: unknown[]; error?: string }> {
   try {
     const { data, error } = await supabase
       .from('practice_sessions')

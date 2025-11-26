@@ -357,10 +357,11 @@ export function useSessionHistory(userId: string) {
 }
 
 /**
- * Hook for AI memory insights
+ * Hook for AI notes
+ * Replaces the deprecated useAIMemory hook
  */
 export function useAIMemory(userId: string) {
-  const [memory, setMemory] = useState<any[]>([]);
+  const [notes, setNotes] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -370,12 +371,12 @@ export function useAIMemory(userId: string) {
     setLoading(true);
     setError(null);
 
-    const result = await api.getAIMemory(userId);
+    const result = await api.getAINotes(userId);
 
     if (result.error) {
       setError(result.error);
     } else {
-      setMemory(result.memory || []);
+      setNotes(result.notes || null);
     }
 
     setLoading(false);
@@ -385,16 +386,17 @@ export function useAIMemory(userId: string) {
     fetchMemory();
   }, [fetchMemory]);
 
-  // Group memory by type
+  // Convert notes object to grouped structure for backwards compatibility
   const groupedMemory = {
-    weak_topics: memory.filter(m => m.memory_type === 'weak_topic'),
-    preferred_methods: memory.filter(m => m.memory_type === 'preferred_method'),
-    strengths: memory.filter(m => m.memory_type === 'strength'),
-    misconceptions: memory.filter(m => m.memory_type === 'misconception'),
+    weak_topics: [],
+    preferred_methods: [],
+    strengths: [],
+    misconceptions: [],
   };
 
   return {
-    memory,
+    notes,
+    memory: notes, // alias for backwards compatibility
     groupedMemory,
     loading,
     error,

@@ -1928,7 +1928,7 @@ The effect on the reader is one of awe, while drawing a tinge of pity for the ha
 
 ---
 
-### **Example 3: Taughtly A\* Examplars**
+### **Example 3: Taughtly A* Examplars**
 
 *The overall effect of paragraph 9 is to show how skillful Sammy is as he climbs the hill like a master athlete. Firstly, the image of him "soaring through the mud" means he jumped so high it was like he flew. The verb "soar" has connotations of freedom like a bird, which suggests the course was effortless to him and how free he felt in that moment. Secondly, the image "pirouetted over the gorge" means Sammy twirled like a ballerina over the hole. The verb "pirouette" has connotations of control, mastery, and beauty, which suggests there is something artistic about how Sammy can tackle this obstacle course. Finally, the image of Sammy "swinging, swaying across with ease" means he moved with ease from one rope to another. The verb "swinging" has connotations of a monkey in a jungle, which implies that tackling Tough Mudder is natural to Sammy. All of this contrasts with how difficult the obstacle course is compared with how fluidly Sammy is able to approach the challenge.* 
 
@@ -2028,7 +2028,7 @@ The effect on the reader is one of awe, while drawing a tinge of pity for the ha
 
 **Was it minutes or hours later? A sharp crack, loud as a gunshot, snapped him to attention. Ears straining, Bo quivered, listening for ravenous forest monsters ready to devour him in one gulp; or maybe a rogue bear or wild boar, hungry for hiker meat? Bo lifted the tent flap and peered into the gaping throat of the darkness, ready to be swallowed.**
 
-**A\* Response**
+**A* Response**
 
 *The author describes the forest in a way which displays its ancient, yet mystical, aura. The phrase "centuries of discarded leaves" is used to denote the the way in which the leaves have accumulated over a period of time, in the absence of human intervention. An alliteration is used in the phrase "stern sentinels" to signify that the trees act as soldiers, on the lookout for trespassers. This effect is further enhanced with the use of personification in the same phrase. "Silence was spellbinding" is another phrase used by the writer to showcase the tranquility and stillness of Bo's surroundings. To explain that the forest has existed long before humanity, "primeval greenery" is used to indicate the forests age and continuity. Hence, the author clearly explains the forest in which Bo is hiking.* 
 
@@ -2038,7 +2038,7 @@ The effect on the reader is one of awe, while drawing a tinge of pity for the ha
 
 ### **Example 6: March 2022, Paper 1 Variant 2**
 
-***The overall effect of paragraph 4 in “Into the Delta” is to evoke a sense of peace and deep connection with nature. The phrase “utter tranquillity of swishing through the water lilies in the open lagoons” uses auditory imagery to create a serene and calming atmosphere. The description of the mokoro as “gently floating as though blown through the perfectly clear water” further enhances this sense of peacefulness and harmony with the natural world. The imagery of the narrator “lay\[ing\] back on my backpack” contributes to a feeling of relaxation and being at one with the environment.***
+***The overall effect of paragraph 4 in "Into the Delta" is to evoke a sense of peace and deep connection with nature. The phrase "utter tranquillity of swishing through the water lilies in the open lagoons" uses auditory imagery to create a serene and calming atmosphere. The description of the mokoro as "gently floating as though blown through the perfectly clear water" further enhances this sense of peacefulness and harmony with the natural world. The imagery of the narrator "lay[ing] back on my backpack" contributes to a feeling of relaxation and being at one with the environment.***
 
 ---
 
@@ -2048,11 +2048,11 @@ The effect on the reader is one of awe, while drawing a tinge of pity for the ha
 
 ***Paragraph 2: The fishing village clung to the coastline like a barnacle to a ship's hull, stubborn and enduring against the Atlantic's relentless assault. Weathered cottages, their stone faces bleached by salt and sun, huddled together as if for protection against the elements. The harbour, a patchwork of weathered boats and tangled nets, buzzed with the morning's activity — fishermen calling to one another in a dialect as rough and textured as the sea itself. The air was thick with the pungent cocktail of salt, fish and seaweed — an aroma that visitors wrinkled their noses at but that locals breathed in like perfume. Gulls wheeled overhead, their mournful cries punctuating the constant percussion of waves against rock. This place existed in a different tempo to the modern world, its rhythms dictated not by digital clocks but by tides and seasons, a living reminder of an older, slower way of life.***
 
-***A\* Answer Paragraph 1:***
+***A* Answer Paragraph 1:***
 
-***The writer uses personification to establish the desert as a conscious entity with agency rather than merely a passive landscape. This is evident when 'the wind, with delicate precision, erased all evidence of our journey'. By attributing intentional, careful action to the wind through phrases like 'delicate precision' and the verb 'erased', the writer suggests the desert actively removes human presence. The contrast between the 'delicate' nature of this action and its complete effectiveness emphasises the desert's power \- it doesn't need brute force to remove traces of humanity, just subtle persistence. This contributes to the passage's theme of human insignificance against natural forces, reinforcing how temporary our impact is on such ancient landscapes. The personification creates a sense that the desert itself is an ancient, conscious entity that has witnessed countless human travelers come and go, leaving no lasting mark on its timeless existence.***
+***The writer uses personification to establish the desert as a conscious entity with agency rather than merely a passive landscape. This is evident when 'the wind, with delicate precision, erased all evidence of our journey'. By attributing intentional, careful action to the wind through phrases like 'delicate precision' and the verb 'erased', the writer suggests the desert actively removes human presence. The contrast between the 'delicate' nature of this action and its complete effectiveness emphasises the desert's power - it doesn't need brute force to remove traces of humanity, just subtle persistence. This contributes to the passage's theme of human insignificance against natural forces, reinforcing how temporary our impact is on such ancient landscapes. The personification creates a sense that the desert itself is an ancient, conscious entity that has witnessed countless human travelers come and go, leaving no lasting mark on its timeless existence.***
 
-***A\* Answer Paragraph 2:***
+***A* Answer Paragraph 2:***
 
 ***By describing how 'The fishing village clung to the coastline like a barnacle to a ship's hull, stubborn and enduring against the Atlantic's relentless assault', the writer creates a sense of the village as resilient and determined despite harsh conditions. Through this powerful combination of simile and personification, enhanced by carefully chosen adjectives like 'stubborn' and 'enduring' set against the personified 'assault' of the ocean, the writer establishes a vivid impression of tenacity. The barnacle comparison is particularly effective because barnacles are small yet incredibly tenacious creatures that survive in hostile environments — making them the perfect metaphor for this human settlement. The militaristic language of 'assault' skillfully establishes the relationship between village and sea as adversarial, suggesting an ongoing battle the village refuses to lose despite being perpetually outmatched in size and force. Rather than simply describing the village as 'located on the coast', this evocative phrasing establishes the central conflict of human persistence against natural forces that defines the village's character, immediately positioning readers to admire its inhabitants' determination and resilience in the face of constant environmental challenges.***
 

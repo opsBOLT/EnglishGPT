@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 type PlanPayload = {
   summary: string;
-  markingResult?: any;
+  markingResult?: unknown;
   essay?: string;
   questionType?: string;
 };
@@ -39,7 +39,7 @@ export type NormalizedStudyPlan = {
  * Create a very detailed study plan using the summary + marking results.
  * The prompt is intentionally massive and exhaustive to guide the LLM output.
  */
-export async function createDetailedStudyPlan(userId: string, payload: PlanPayload): Promise<{ plan?: any; error?: string }> {
+export async function createDetailedStudyPlan(userId: string, payload: PlanPayload): Promise<{ plan?: NormalizedStudyPlan; error?: string }> {
   const prompt = `
 You are an elite IGCSE English tutor. Build a concrete, actionable study plan using:
 1) The onboarding conversation summary (student goals/weaknesses/strengths).
@@ -474,7 +474,7 @@ WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
         Authorization: `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY || ''}`,
       },
       body: JSON.stringify({
-        model: 'grok-4.1-fast',
+        model: 'grok-4.1-fast:free',
         messages: [
           { role: 'system', content: 'Return only JSON. Do not include markdown fences.' },
           { role: 'user', content: prompt },
@@ -496,10 +496,10 @@ WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
       return { error: 'Empty LLM response' };
     }
 
-    let planJson: any;
+    let planJson: unknown;
     try {
       planJson = JSON.parse(content);
-    } catch (err) {
+    } catch {
       console.error('[studyPlan] parse failed, content:', content);
       return { error: 'Failed to parse study plan JSON' };
     }
@@ -511,7 +511,7 @@ WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
       .upsert({
         user_id: userId,
         plan_data: normalized,
-      } as any);
+      });
 
     if (dbError) {
       console.error('[studyPlan] DB save error', dbError);
@@ -528,14 +528,14 @@ WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
 /**
  * Normalize the raw LLM response into a predictable shape for the UI.
  */
-function normalizePlan(raw: any): NormalizedStudyPlan {
-  const asArray = (val: any, fallback: string[] = []) =>
+function normalizePlan(raw: unknown): NormalizedStudyPlan {
+  const asArray = (val: unknown, fallback: string[] = []) =>
     Array.isArray(val) ? val.map(v => String(v)) : fallback;
-  const asNumber = (val: any, fallback: number) => (typeof val === 'number' ? val : fallback);
-  const asString = (val: any, fallback = '') => (typeof val === 'string' ? val : fallback);
-  const asWeekArray = (val: any) => {
+  const asNumber = (val: unknown, fallback: number) => (typeof val === 'number' ? val : fallback);
+  const asString = (val: unknown, fallback = '') => (typeof val === 'string' ? val : fallback);
+  const asWeekArray = (val: unknown) => {
     if (!Array.isArray(val)) return [];
-    return val.map((w, idx) => ({
+    return val.map((w: any, idx: number) => ({
       week_number: asNumber(w?.week_number, idx + 1),
       theme: asString(w?.theme, ''),
       goals: asArray(w?.goals, []),
@@ -547,31 +547,32 @@ function normalizePlan(raw: any): NormalizedStudyPlan {
     }));
   };
 
-  const targets = raw?.targets || {};
-  const daily = raw?.daily_micro_tasks || {};
+  const rawObj = raw as any;
+  const targets = rawObj?.targets || {};
+  const daily = rawObj?.daily_micro_tasks || {};
   const normalizedDaily: Record<string, string[]> = {};
   const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
   days.forEach(d => {
     const tasks = daily?.[d] || daily?.[d.charAt(0).toUpperCase() + d.slice(1)] || [];
-    normalizedDaily[d] = Array.isArray(tasks) ? tasks.map((t: any) => String(t)) : [];
+    normalizedDaily[d] = Array.isArray(tasks) ? tasks.map((t: unknown) => String(t)) : [];
   });
 
   return {
-    overview: asString(raw?.overview, ''),
+    overview: asString(rawObj?.overview, ''),
     targets: {
       target_grade: asString(targets?.target_grade, 'A'),
       time_frame_weeks: asNumber(targets?.time_frame_weeks, 8),
       weekly_hours: asNumber(targets?.weekly_hours, 5),
     },
-    diagnosis: asArray(raw?.diagnosis, []),
-    strengths: asArray(raw?.strengths, []),
-    weaknesses: asArray(raw?.weaknesses, []),
-    priorities: asArray(raw?.priorities, []),
-    weekly_plan: asWeekArray(raw?.weekly_plan),
+    diagnosis: asArray(rawObj?.diagnosis, []),
+    strengths: asArray(rawObj?.strengths, []),
+    weaknesses: asArray(rawObj?.weaknesses, []),
+    priorities: asArray(rawObj?.priorities, []),
+    weekly_plan: asWeekArray(rawObj?.weekly_plan),
     daily_micro_tasks: normalizedDaily,
-    exam_drills: asArray(raw?.exam_drills, []),
-    feedback_loops: asArray(raw?.feedback_loops, []),
-    resources: asArray(raw?.resources, []),
-    reflection_prompts: asArray(raw?.reflection_prompts, []),
+    exam_drills: asArray(rawObj?.exam_drills, []),
+    feedback_loops: asArray(rawObj?.feedback_loops, []),
+    resources: asArray(rawObj?.resources, []),
+    reflection_prompts: asArray(rawObj?.reflection_prompts, []),
   };
 }

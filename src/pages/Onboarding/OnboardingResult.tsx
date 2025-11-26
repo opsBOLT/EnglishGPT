@@ -8,6 +8,7 @@ type LocationState = {
   result?: EvaluateResult;
   essay?: string;
   questionType?: string;
+  examStruggles?: string[];
 };
 
 type SectionKey = 'feedback' | 'improvements' | 'strengths' | 'nextSteps' | 'marks';

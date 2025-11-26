@@ -290,18 +290,19 @@ export function PixelAnimation({
   useEffect(() => {
     const resizeObserver = new ResizeObserver(resize)
     const container = containerRef.current
+    const animationRequest = animationRef.current
 
     if (container) {
       resizeObserver.observe(container)
     }
 
     return () => {
-      if (animationRef.current.request) {
-        cancelAnimationFrame(animationRef.current.request)
+      if (animationRequest.request) {
+        cancelAnimationFrame(animationRequest.request)
       }
       resizeObserver.disconnect()
     }
-  }, [])
+  }, [resize])
 
   return (
     <div

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { ScrollAreaProps } from '@radix-ui/react-scroll-area';
 
-interface XScrollProps extends ScrollAreaProps {}
+type XScrollProps = ScrollAreaProps
 
 export default function XScroll({ children, className, ...props }: XScrollProps) {
   return (

@@ -27,7 +27,7 @@ The effect on the reader is one of awe, while drawing a tinge of pity for the ha
 
 ---
 
-### **Example 3: Taughtly A\* Examplars**
+### **Example 3: Taughtly A* Examplars**
 
 *The overall effect of paragraph 9 is to show how skillful Sammy is as he climbs the hill like a master athlete. Firstly, the image of him "soaring through the mud" means he jumped so high it was like he flew. The verb "soar" has connotations of freedom like a bird, which suggests the course was effortless to him and how free he felt in that moment. Secondly, the image "pirouetted over the gorge" means Sammy twirled like a ballerina over the hole. The verb "pirouette" has connotations of control, mastery, and beauty, which suggests there is something artistic about how Sammy can tackle this obstacle course. Finally, the image of Sammy "swinging, swaying across with ease" means he moved with ease from one rope to another. The verb "swinging" has connotations of a monkey in a jungle, which implies that tackling Tough Mudder is natural to Sammy. All of this contrasts with how difficult the obstacle course is compared with how fluidly Sammy is able to approach the challenge.* 
 
@@ -127,7 +127,7 @@ The effect on the reader is one of awe, while drawing a tinge of pity for the ha
 
 **Was it minutes or hours later? A sharp crack, loud as a gunshot, snapped him to attention. Ears straining, Bo quivered, listening for ravenous forest monsters ready to devour him in one gulp; or maybe a rogue bear or wild boar, hungry for hiker meat? Bo lifted the tent flap and peered into the gaping throat of the darkness, ready to be swallowed.**
 
-**A\* Response**
+**A* Response**
 
 *The author describes the forest in a way which displays its ancient, yet mystical, aura. The phrase "centuries of discarded leaves" is used to denote the the way in which the leaves have accumulated over a period of time, in the absence of human intervention. An alliteration is used in the phrase "stern sentinels" to signify that the trees act as soldiers, on the lookout for trespassers. This effect is further enhanced with the use of personification in the same phrase. "Silence was spellbinding" is another phrase used by the writer to showcase the tranquility and stillness of Bo's surroundings. To explain that the forest has existed long before humanity, "primeval greenery" is used to indicate the forests age and continuity. Hence, the author clearly explains the forest in which Bo is hiking.* 
 
@@ -137,7 +137,7 @@ The effect on the reader is one of awe, while drawing a tinge of pity for the ha
 
 ### **Example 6: March 2022, Paper 1 Variant 2**
 
-***The overall effect of paragraph 4 in “Into the Delta” is to evoke a sense of peace and deep connection with nature. The phrase “utter tranquillity of swishing through the water lilies in the open lagoons” uses auditory imagery to create a serene and calming atmosphere. The description of the mokoro as “gently floating as though blown through the perfectly clear water” further enhances this sense of peacefulness and harmony with the natural world. The imagery of the narrator “lay\[ing\] back on my backpack” contributes to a feeling of relaxation and being at one with the environment.***
+***The overall effect of paragraph 4 in "Into the Delta" is to evoke a sense of peace and deep connection with nature. The phrase "utter tranquillity of swishing through the water lilies in the open lagoons" uses auditory imagery to create a serene and calming atmosphere. The description of the mokoro as "gently floating as though blown through the perfectly clear water" further enhances this sense of peacefulness and harmony with the natural world. The imagery of the narrator "lay[ing] back on my backpack" contributes to a feeling of relaxation and being at one with the environment.***
 
 ---
 

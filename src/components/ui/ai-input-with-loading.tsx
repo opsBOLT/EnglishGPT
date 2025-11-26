@@ -29,7 +29,7 @@ export function AIInputWithLoading({
 }: AIInputWithLoadingProps) {
   const [inputValue, setInputValue] = useState("");
   const [submitted, setSubmitted] = useState(autoAnimate);
-  const [isAnimating, setIsAnimating] = useState(autoAnimate);
+  const [isAnimating] = useState(autoAnimate);
 
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight,

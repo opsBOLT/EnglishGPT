@@ -49,8 +49,6 @@ export function StudySession({ userId }: StudySessionProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isWriterEffect = category === 'writers-effect';
-  const snippet = GUIDE_SNIPPETS.writers_effect;
-  const writerGuideText = IGCSE_MAIN_GUIDES.find(g => g.key === 'paper1')?.content || '';
 
 
   // Backend integration
@@ -109,9 +107,12 @@ export function StudySession({ userId }: StudySessionProps) {
       return;
     }
 
+    let currentSessionId: string | null = null;
+
     const initSession = async () => {
       const id = await startSession(category as string, 'study');
       if (id) {
+        currentSessionId = id;
         setSessionId(id);
         timer.start();
       }
@@ -141,11 +142,11 @@ export function StudySession({ userId }: StudySessionProps) {
 
     // Cleanup on unmount
     return () => {
-      if (sessionId) {
+      if (currentSessionId) {
         handleEndSession();
       }
     };
-  }, [category]);
+  }, [category, handleEndSession, isWriterEffect, navigate, startSession, timer]);
 
   // Auto-save notes every 10 seconds
   useEffect(() => {
@@ -192,7 +193,6 @@ export function StudySession({ userId }: StudySessionProps) {
   const handleCompleteSection = () => {
     if (!derivedSections.length) return;
 
-    const currentSection = derivedSections[currentSectionIndex];
     // Show quiz if available
     if ((isWriterEffect && writerQuiz.length > 0) || (categoryConfig?.quizQuestions && categoryConfig.quizQuestions.length > 0)) {
       setShowQuiz(true);
