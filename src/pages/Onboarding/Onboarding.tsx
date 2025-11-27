@@ -903,7 +903,8 @@ Rules:
 
   // Ensure the step 1 CTA appears after 60 seconds even if no assistant reply is received
   useEffect(() => {
-    if (currentStep !== 1 || allowNext) {
+    // Only set timeout when we first enter step 1 and allowNext is false
+    if (currentStep !== 1) {
       if (allowNextTimeoutRef.current) {
         clearTimeout(allowNextTimeoutRef.current);
         allowNextTimeoutRef.current = null;
@@ -911,10 +912,20 @@ Rules:
       return;
     }
 
-    allowNextTimeoutRef.current = window.setTimeout(() => {
-      setAllowNext(true);
-      allowNextTimeoutRef.current = null;
-    }, 60000);
+    // If already allowed, no need to set timeout
+    if (allowNext) {
+      return;
+    }
+
+    // Only set timeout if it hasn't been set yet
+    if (!allowNextTimeoutRef.current) {
+      console.log('[onboarding] Setting 60s timeout for Done Talking button');
+      allowNextTimeoutRef.current = window.setTimeout(() => {
+        console.log('[onboarding] 60s timeout reached - enabling Done Talking button');
+        setAllowNext(true);
+        allowNextTimeoutRef.current = null;
+      }, 60000);
+    }
 
     return () => {
       if (allowNextTimeoutRef.current) {
