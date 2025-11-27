@@ -62,7 +62,7 @@ const DashboardNew = () => {
 
   const loadDashboardData = async () => {
     if (!user) return;
-
+  
     try {
       setLoading(true);
 
