@@ -768,7 +768,7 @@ const Onboarding = () => {
           'X-Title': 'EnglishGPT Onboarding',
         },
         body: JSON.stringify({
-          model: 'grok-4.1-fast:free',
+          model: 'x-ai/grok-4.1-fast:free',
           messages: [
             {
               role: 'system',
