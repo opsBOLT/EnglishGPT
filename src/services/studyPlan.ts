@@ -479,7 +479,7 @@ WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
         Authorization: `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY || ''}`,
       },
       body: JSON.stringify({
-        model: 'grok-4.1-fast:free',
+        model: 'x-ai/grok-4.1-fast:free',
         messages: [
           { role: 'system', content: 'Return only JSON. Do not include markdown fences.' },
           { role: 'user', content: prompt },
