@@ -85,7 +85,7 @@ const DashboardNew = () => {
         });
 
       const { data: planData, error: planError } = await supabase
-        .from('study_plans')
+        .from('study_plan')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
