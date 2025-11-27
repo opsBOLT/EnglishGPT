@@ -496,6 +496,7 @@ const Onboarding = () => {
     setSummarySaveError(null);
     setIsConnected(false);
     setConnectionStatus('disconnected');
+    // Don't reset allowNext when disconnecting - user may have waited 60s
     if (!preserveTranscript) {
       setConversationTranscript([]);
     }
@@ -615,7 +616,7 @@ const Onboarding = () => {
           // When assistant response is complete, save to transcript
           if (payload.type === 'response.output_text.done' || payload.type === 'response.output_audio_transcript.done') {
             setFormData(prev => ({ ...prev, voiceIntroComplete: true }));
-            setAllowNext(true);
+            // Don't set allowNext here - let the 60s timer control it
 
             if (summaryPending) {
               setSummaryPending(false);
@@ -675,6 +676,17 @@ const Onboarding = () => {
 
       setConnectionStatus('connected');
       setIsConnected(true);
+
+      // Start 60-second timer for "Done Talking" button
+      console.log('[onboarding] Connection established - starting 60s timer for Done Talking button');
+      if (allowNextTimeoutRef.current) {
+        clearTimeout(allowNextTimeoutRef.current);
+      }
+      allowNextTimeoutRef.current = window.setTimeout(() => {
+        console.log('[onboarding] 60s timer complete - enabling Done Talking button');
+        setAllowNext(true);
+        allowNextTimeoutRef.current = null;
+      }, 60000);
 
       // Simulated audio level animation while connected
       audioLevelIntervalRef.current = window.setInterval(() => {
@@ -901,39 +913,16 @@ Rules:
     }
   }, [user?.id, userId, navigate]);
 
-  // Ensure the step 1 CTA appears after 60 seconds even if no assistant reply is received
+  // Reset allowNext when leaving step 1
   useEffect(() => {
-    // Only set timeout when we first enter step 1 and allowNext is false
     if (currentStep !== 1) {
+      setAllowNext(false);
       if (allowNextTimeoutRef.current) {
         clearTimeout(allowNextTimeoutRef.current);
         allowNextTimeoutRef.current = null;
       }
-      return;
     }
-
-    // If already allowed, no need to set timeout
-    if (allowNext) {
-      return;
-    }
-
-    // Only set timeout if it hasn't been set yet
-    if (!allowNextTimeoutRef.current) {
-      console.log('[onboarding] Setting 60s timeout for Done Talking button');
-      allowNextTimeoutRef.current = window.setTimeout(() => {
-        console.log('[onboarding] 60s timeout reached - enabling Done Talking button');
-        setAllowNext(true);
-        allowNextTimeoutRef.current = null;
-      }, 60000);
-    }
-
-    return () => {
-      if (allowNextTimeoutRef.current) {
-        clearTimeout(allowNextTimeoutRef.current);
-        allowNextTimeoutRef.current = null;
-      }
-    };
-  }, [currentStep, allowNext]);
+  }, [currentStep]);
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
