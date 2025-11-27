@@ -467,12 +467,14 @@ const Onboarding = () => {
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const audioLevelIntervalRef = useRef<number | null>(null);
+  const allowNextTimeoutRef = useRef<number | null>(null);
   const [conversationTranscript, setConversationTranscript] = useState<TranscriptItem[]>([]);
   const currentAssistantMessageRef = useRef<string>('');
 
   const totalSteps = 3;
 
-  const teardownConnection = () => {
+  const teardownConnection = (options?: { preserveTranscript?: boolean }) => {
+    const { preserveTranscript = false } = options || {};
     dcRef.current?.close();
     pcRef.current?.getSenders().forEach(sender => sender.track?.stop());
     pcRef.current?.close();
@@ -480,6 +482,10 @@ const Onboarding = () => {
     if (audioLevelIntervalRef.current) {
       clearInterval(audioLevelIntervalRef.current);
       audioLevelIntervalRef.current = null;
+    }
+    if (allowNextTimeoutRef.current) {
+      clearTimeout(allowNextTimeoutRef.current);
+      allowNextTimeoutRef.current = null;
     }
     pcRef.current = null;
     dcRef.current = null;
@@ -490,7 +496,9 @@ const Onboarding = () => {
     setSummarySaveError(null);
     setIsConnected(false);
     setConnectionStatus('disconnected');
-    setConversationTranscript([]);
+    if (!preserveTranscript) {
+      setConversationTranscript([]);
+    }
   };
 
   const connectToRealtime = async () => {
@@ -875,8 +883,8 @@ Rules:
   };
 
   // Disconnect from Realtime
-  const disconnectFromRoom = async () => {
-    teardownConnection();
+  const disconnectFromRoom = async (preserveTranscript = false) => {
+    teardownConnection({ preserveTranscript });
     setAudioLevel(0);
   };
 
@@ -892,6 +900,29 @@ Rules:
       navigate(`/onboarding/${user.id}`, { replace: true });
     }
   }, [user?.id, userId, navigate]);
+
+  // Ensure the step 1 CTA appears after 60 seconds even if no assistant reply is received
+  useEffect(() => {
+    if (currentStep !== 1 || allowNext) {
+      if (allowNextTimeoutRef.current) {
+        clearTimeout(allowNextTimeoutRef.current);
+        allowNextTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    allowNextTimeoutRef.current = window.setTimeout(() => {
+      setAllowNext(true);
+      allowNextTimeoutRef.current = null;
+    }, 60000);
+
+    return () => {
+      if (allowNextTimeoutRef.current) {
+        clearTimeout(allowNextTimeoutRef.current);
+        allowNextTimeoutRef.current = null;
+      }
+    };
+  }, [currentStep, allowNext]);
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -1401,14 +1432,17 @@ Rules:
               {currentStep === 1 ? (
                 allowNext ? (
                   <button
-                    onClick={handleNext}
+                    onClick={async () => {
+                      await disconnectFromRoom(true);
+                      handleNext();
+                    }}
                     className="flex items-center space-x-2 px-8 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-110 sulphur-point-bold"
                     style={{
                       backgroundColor: '#aa08f3',
                       color: 'white',
                     }}
                   >
-                    <span>Next</span>
+                    <span>Done talking</span>
                     <ChevronRight className="w-5 h-5" />
                   </button>
                 ) : (

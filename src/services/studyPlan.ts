@@ -467,6 +467,11 @@ WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
 `;
 
   try {
+    const shouldLogPrompt = import.meta.env.DEV || import.meta.env.VITE_DEBUG_STUDY_PLAN_PROMPT === 'true';
+    if (shouldLogPrompt) {
+      console.log('[studyPlan] Full prompt preview:', prompt);
+    }
+
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
