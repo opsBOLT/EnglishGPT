@@ -76,7 +76,7 @@ export interface Database {
           created_at?: string
         }
       }
-      study_plans: {
+      study_plan: {
         Row: {
           id: string
           user_id: string

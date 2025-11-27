@@ -27,7 +27,7 @@ export interface StudyPlan {
 
 export interface DailyTask {
   id: string;
-  study_plans_id: string;
+  study_plan_id: string;
   day_of_week: number;
   category: 'paper1' | 'paper2' | 'examples' | 'text_types' | 'vocabulary';
   title: string;

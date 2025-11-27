@@ -63,7 +63,7 @@ const StudyPlanGeneration = () => {
       setStatus('generating');
 
       const { data, error } = await supabase
-        .from('study_plans')
+        .from('study_plan')
         .select('plan_data')
         .eq('user_id', user?.id)
         .order('updated_at', { ascending: false })
