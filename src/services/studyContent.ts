@@ -205,7 +205,7 @@ export async function generateStudySession(
   try {
     // Log the prompt
     const startTime = Date.now();
-    const logId = aiLogger.logPrompt('study_content', 'x-ai/grok-4.1-fast:free', prompt, {
+    const logId = aiLogger.logPrompt('study_content', 'x-ai/grok-4-fast', prompt, {
       guideKey,
       hasUserNotes: !!userNotes,
       hasUserSummary: !!userSummary,
@@ -218,7 +218,7 @@ export async function generateStudySession(
         Authorization: `Bearer ${apiKey || import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY || ''}`,
       },
       body: JSON.stringify({
-        model: 'x-ai/grok-4.1-fast:free',
+        model: 'x-ai/grok-4-fast',
         messages: [
           { role: 'system', content: 'Return only JSON. Do not include markdown fences.' },
           { role: 'user', content: prompt },

@@ -803,7 +803,7 @@ Use the AI notes above to:
   try {
     // Log the prompt
     const startTime = Date.now();
-    const logId = aiLogger.logPrompt('study_plan', 'x-ai/grok-4.1-fast:free', prompt, { userId });
+    const logId = aiLogger.logPrompt('study_plan', 'x-ai/grok-4-fast', prompt, { userId });
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -812,7 +812,7 @@ Use the AI notes above to:
         Authorization: `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY || ''}`,
       },
       body: JSON.stringify({
-        model: 'x-ai/grok-4.1-fast:free',
+        model: 'x-ai/grok-4-fast',
         messages: [
           { role: 'system', content: 'Return only JSON. Do not include markdown fences.' },
           { role: 'user', content: prompt },

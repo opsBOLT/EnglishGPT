@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { EvaluateResult } from '../../services/markingClient';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 type LocationState = {
   result?: EvaluateResult;
@@ -34,6 +35,9 @@ const OnboardingResult = () => {
     nextSteps: false,
     marks: false,
   });
+
+  const [isPlanReady, setIsPlanReady] = useState(false);
+  const [checkingPlan, setCheckingPlan] = useState(true);
 
   useEffect(() => {
     if (!user?.id || !userId) return;
@@ -120,6 +124,45 @@ const OnboardingResult = () => {
     }
   }, [resolvedEssay, resolvedResult, user?.id, navigate]);
 
+  // Poll the database to check if the study plan is ready
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const checkPlanStatus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('study_plan')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          setIsPlanReady(true);
+          setCheckingPlan(false);
+        }
+      } catch (err) {
+        console.error('Error checking plan status:', err);
+      }
+    };
+
+    // Check immediately
+    checkPlanStatus();
+
+    // Poll every 2 seconds for up to 60 seconds
+    const interval = setInterval(checkPlanStatus, 2000);
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      setCheckingPlan(false);
+    }, 60000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [user?.id]);
+
   if (!resolvedResult || !resolvedEssay) {
     return null;
   }
@@ -174,10 +217,14 @@ const OnboardingResult = () => {
                     },
                   });
                 }}
-                className="px-5 py-3 rounded-xl font-bold sulphur-point-bold border border-slate-200 hover:border-slate-300 transition-colors"
+                disabled={!isPlanReady}
+                className="px-5 py-3 rounded-xl font-bold sulphur-point-bold border border-slate-200 hover:border-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 style={{ color: accent }}
               >
-                Build my study plan
+                {checkingPlan && !isPlanReady && (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                )}
+                {checkingPlan && !isPlanReady ? 'Generating plan...' : 'Build my study plan'}
               </button>
               <button
                 onClick={() => navigate('/dashboard?test=true')}
