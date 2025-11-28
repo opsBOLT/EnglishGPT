@@ -4,7 +4,7 @@
  * Includes marking integration for student answers
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, type MutableRefObject } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { generatePracticeSession, type PracticeSessionPlan, type PracticeGuideType, getQuestionTypeLabel } from '../services/practiceContent';
@@ -309,6 +309,7 @@ export function PracticeSession({ userId: propsUserId }: PracticeSessionProps) {
                   sessionPlan={sessionPlan}
                   answers={answers}
                   currentQuestionIndex={currentQuestionIndex}
+                  practiceType={practiceType}
                   onAnswerChange={handleAnswerChange}
                   onMarkQuestion={handleMarkQuestion}
                   onMarkAll={handleMarkAll}
@@ -445,6 +446,373 @@ function GuidanceSection({
           Start Practice Session
         </Button>
       </Card>
+    </div>
+  );
+}
+
+// Practice Section Component
+function PracticeSection({
+  sessionPlan,
+  answers,
+  currentQuestionIndex,
+  practiceType,
+  onAnswerChange,
+  onMarkQuestion,
+  onMarkAll,
+  onQuestionChange,
+  textareaRefs,
+}: {
+  sessionPlan: PracticeSessionPlan;
+  answers: Record<number, QuestionAnswer>;
+  currentQuestionIndex: number;
+  practiceType: PracticeGuideType | null;
+  onAnswerChange: (questionIndex: number, value: string) => void;
+  onMarkQuestion: (questionIndex: number) => Promise<void>;
+  onMarkAll: () => Promise<void>;
+  onQuestionChange: (index: number) => void;
+  textareaRefs: MutableRefObject<Record<number, HTMLTextAreaElement | null>>;
+}) {
+  const currentQuestion = sessionPlan.selected_questions[currentQuestionIndex];
+  const currentAnswer = answers[currentQuestionIndex];
+
+  // Auto-focus the textarea when switching questions
+  useEffect(() => {
+    const el = textareaRefs.current[currentQuestionIndex];
+    if (el) {
+      el.focus();
+    }
+  }, [currentQuestionIndex, textareaRefs]);
+
+  const relatedSteps = sessionPlan.practice_steps?.filter(step =>
+    !step.applies_to_questions || step.applies_to_questions.includes(currentQuestionIndex + 1)
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Question navigation */}
+      <Card className="p-6 bg-white shadow-lg">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#aa08f3]/10 flex items-center justify-center text-[#aa08f3] font-bold sulphur-point-bold">
+              Q{currentQuestionIndex + 1}
+            </div>
+            <div>
+              <p className="text-sm text-slate-500 sulphur-point-regular">Question</p>
+              <p className="text-lg font-bold text-slate-900 sulphur-point-bold">
+                {currentQuestion.exam_series}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={() => onMarkQuestion(currentQuestionIndex)} disabled={currentAnswer?.isMarking}>
+              {currentAnswer?.isMarking ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Marking...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Send className="w-4 h-4" /> Mark this question
+                </span>
+              )}
+            </Button>
+            <Button size="sm" onClick={onMarkAll}>
+              Mark all &amp; view results
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          {sessionPlan.selected_questions.map((_, idx) => {
+            const marked = !!answers[idx]?.markingResult;
+            const active = idx === currentQuestionIndex;
+            return (
+              <button
+                key={idx}
+                onClick={() => onQuestionChange(idx)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+                  active
+                    ? 'bg-[#aa08f3] text-white border-[#aa08f3]'
+                    : marked
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:border-[#aa08f3]/50'
+                }`}
+              >
+                {marked ? 'Marked' : `Question ${idx + 1}`}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Question + Guidance */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="p-6 bg-white shadow-lg lg:col-span-2 space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm text-slate-500 sulphur-point-regular">{currentQuestion.exam_series}</p>
+              <h3 className="text-xl font-bold text-slate-900 sulphur-point-bold mb-2">
+                {getQuestionTypeLabel((practiceType || 'narrative_writing') as PracticeGuideType)}
+              </h3>
+              <p className="text-slate-800 sulphur-point-regular">{currentQuestion.question_text}</p>
+            </div>
+            <span className="text-sm font-semibold text-[#aa08f3] sulphur-point-bold whitespace-nowrap">
+              {currentQuestion.marks} marks
+            </span>
+          </div>
+
+          {currentQuestion.why_selected && (
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+              <p className="text-xs font-semibold text-slate-500 sulphur-point-bold uppercase tracking-wide mb-2">
+                Why this question
+              </p>
+              <p className="text-sm text-slate-700 sulphur-point-regular">{currentQuestion.why_selected}</p>
+            </div>
+          )}
+
+          {/* Answer box */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-600 sulphur-point-regular">Your answer</p>
+              <span className="text-sm font-semibold text-slate-700 sulphur-point-bold">
+                {currentAnswer?.wordCount || 0} words
+              </span>
+            </div>
+            <textarea
+              ref={el => {
+                textareaRefs.current[currentQuestionIndex] = el;
+              }}
+              value={currentAnswer?.answer || ''}
+              onChange={e => onAnswerChange(currentQuestionIndex, e.target.value)}
+              placeholder="Write your response here..."
+              className="w-full min-h-[400px] p-5 rounded-xl border-2 border-slate-200 focus:border-[#aa08f3] focus:ring-2 focus:ring-[#aa08f3]/30 outline-none shadow-inner sulphur-point-regular text-slate-900"
+            />
+          </div>
+
+          {/* Marking results */}
+          {currentAnswer?.markingResult && (
+            <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 rounded-xl p-5 space-y-3">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-6 h-6 text-emerald-500" />
+                <div>
+                  <p className="text-xs uppercase font-semibold text-emerald-600 sulphur-point-bold">
+                    Marking Feedback
+                  </p>
+                  <p className="text-lg font-bold text-emerald-800 sulphur-point-bold">
+                    Grade: {currentAnswer.markingResult.grade || '—'}
+                  </p>
+                </div>
+              </div>
+              {currentAnswer.markingResult.total_score && (
+                <p className="text-sm text-slate-700 sulphur-point-regular">
+                  Score: {currentAnswer.markingResult.total_score}
+                  {currentAnswer.markingResult.max_score ? ` / ${currentAnswer.markingResult.max_score}` : ''}
+                </p>
+              )}
+              <p className="text-sm text-slate-800 sulphur-point-regular whitespace-pre-line">
+                {currentAnswer.markingResult.feedback}
+              </p>
+              {currentAnswer.markingResult.improvement_suggestions &&
+                currentAnswer.markingResult.improvement_suggestions.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 sulphur-point-bold mb-1">
+                      Improvements
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700 sulphur-point-regular">
+                      {currentAnswer.markingResult.improvement_suggestions.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              {currentAnswer.markingResult.strengths && currentAnswer.markingResult.strengths.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-slate-800 sulphur-point-bold mb-1">
+                    Strengths
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700 sulphur-point-regular">
+                    {currentAnswer.markingResult.strengths.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+
+        {/* Side guidance */}
+        <div className="space-y-4">
+          {relatedSteps && relatedSteps.length > 0 && (
+            <Card className="p-5 bg-gradient-to-br from-slate-50 to-white border border-slate-200">
+              <div className="flex items-center gap-2 mb-3">
+                <BookOpen className="w-5 h-5 text-[#aa08f3]" />
+                <h4 className="text-sm font-bold text-slate-900 sulphur-point-bold uppercase tracking-wide">
+                  Steps for this question
+                </h4>
+              </div>
+              <div className="space-y-3">
+                {relatedSteps.map(step => (
+                  <div key={step.step_number} className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-semibold text-slate-900 sulphur-point-bold">
+                        Step {step.step_number}: {step.title}
+                      </p>
+                      <span className="text-xs text-slate-500 sulphur-point-regular">
+                        {step.duration_minutes} min
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-700 sulphur-point-regular">{step.instruction}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {sessionPlan.model_examples && (
+            <Card className="p-5 bg-white border border-slate-200">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-5 h-5 text-[#aa08f3]" />
+                <h4 className="text-sm font-bold text-slate-900 sulphur-point-bold uppercase tracking-wide">
+                  Model examples
+                </h4>
+              </div>
+              <div className="space-y-3">
+                {sessionPlan.model_examples.good_opening && (
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-slate-600 sulphur-point-bold mb-1">Strong opening</p>
+                    <p className="text-sm text-slate-800 sulphur-point-regular whitespace-pre-line">
+                      {sessionPlan.model_examples.good_opening}
+                    </p>
+                  </div>
+                )}
+                {sessionPlan.model_examples.good_paragraph && (
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-slate-600 sulphur-point-bold mb-1">Model paragraph</p>
+                    <p className="text-sm text-slate-800 sulphur-point-regular whitespace-pre-line">
+                      {sessionPlan.model_examples.good_paragraph}
+                    </p>
+                  </div>
+                )}
+                {sessionPlan.model_examples.vocabulary_bank && sessionPlan.model_examples.vocabulary_bank.length > 0 && (
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-slate-600 sulphur-point-bold mb-2">Vocabulary bank</p>
+                    <div className="flex flex-wrap gap-2">
+                      {sessionPlan.model_examples.vocabulary_bank.map((word, idx) => (
+                        <span key={idx} className="px-3 py-1 rounded-full bg-[#aa08f3]/10 text-[#aa08f3] text-xs font-semibold sulphur-point-bold">
+                          {word}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Results Section Component
+function ResultsSection({
+  sessionPlan,
+  answers,
+  onBackToPractice,
+  onEndSession,
+}: {
+  sessionPlan: PracticeSessionPlan;
+  answers: Record<number, QuestionAnswer>;
+  onBackToPractice: () => void;
+  onEndSession: () => void;
+}) {
+  const markedCount = sessionPlan.selected_questions.filter((_, idx) => !!answers[idx]?.markingResult).length;
+  const totalQuestions = sessionPlan.selected_questions.length;
+
+  return (
+    <div className="space-y-6">
+      <Card className="p-8 bg-white shadow-lg">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <p className="text-sm text-slate-500 sulphur-point-regular">Session summary</p>
+            <h2 className="text-3xl font-bold text-slate-900 sulphur-point-bold">Great work!</h2>
+            <p className="text-slate-700 sulphur-point-regular">
+              You completed {markedCount} out of {totalQuestions} questions with marking feedback.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={onBackToPractice}>
+              Back to practice
+            </Button>
+            <Button onClick={onEndSession}>
+              Finish
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {sessionPlan.selected_questions.map((question, idx) => {
+          const answer = answers[idx];
+          const result = answer?.markingResult;
+          return (
+            <Card key={idx} className="p-6 bg-white border border-slate-200 shadow-sm space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase font-semibold text-slate-500 sulphur-point-bold tracking-wide">
+                    Question {idx + 1} • {question.exam_series}
+                  </p>
+                  <p className="text-slate-900 font-semibold sulphur-point-regular">{question.question_text}</p>
+                </div>
+                <span className="text-sm font-semibold text-[#aa08f3] sulphur-point-bold">
+                  {question.marks} marks
+                </span>
+              </div>
+
+              {result ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-emerald-500" />
+                    <p className="text-sm font-semibold text-emerald-700 sulphur-point-bold">
+                      Grade: {result.grade || '—'}
+                    </p>
+                  </div>
+                  {result.feedback && (
+                    <p className="text-sm text-slate-800 sulphur-point-regular whitespace-pre-line">
+                      {result.feedback}
+                    </p>
+                  )}
+                  {result.improvement_suggestions && result.improvement_suggestions.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800 sulphur-point-bold mb-1">Improvements</p>
+                      <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700 sulphur-point-regular">
+                        {result.improvement_suggestions.map((item, i) => (
+                          <li key={i}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {result.strengths && result.strengths.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800 sulphur-point-bold mb-1">Strengths</p>
+                      <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700 sulphur-point-regular">
+                        {result.strengths.map((item, i) => (
+                          <li key={i}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-slate-600 sulphur-point-regular">
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                  Awaiting marking...
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
