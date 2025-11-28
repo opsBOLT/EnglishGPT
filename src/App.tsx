@@ -10,7 +10,7 @@ import StudyPlanGeneration from './pages/StudyPlanGeneration';
 import Study from './pages/Study/Study';
 import StudySession from './pages/StudySession';
 import Practice from './pages/Practice/Practice';
-import PracticeSession from './pages/PracticeSession';
+import { PracticeSession } from './pages/PracticeSession';
 import Calendar from './pages/Calendar/Calendar';
 import Analytics from './pages/Analytics/Analytics';
 import AILogs from './pages/AILogs';
