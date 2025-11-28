@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -263,7 +263,7 @@ export function PixelAnimation({
     }
   }
 
-  const resize = () => {
+  const resize = useCallback(() => {
     const canvas = canvasRef.current
     const container = containerRef.current
     if (!canvas || !container) return
@@ -285,7 +285,8 @@ export function PixelAnimation({
     animationRef.current.ticker = 0
 
     animate()
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     const resizeObserver = new ResizeObserver(resize)

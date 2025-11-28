@@ -5,7 +5,7 @@ import Landing from './pages/Landing/Landing';
 import Signup from './pages/Auth/Signup';
 import Onboarding from './pages/Onboarding/Onboarding';
 import OnboardingResult from './pages/Onboarding/OnboardingResult';
-import Dashboard from './pages/Dashboard/DashboardNew';
+import Dashboard from './pages/Dashboard/dashboard';
 import StudyPlanGeneration from './pages/StudyPlanGeneration';
 import Study from './pages/Study/Study';
 import StudySession from './pages/StudySession';
@@ -13,6 +13,7 @@ import Practice from './pages/Practice/Practice';
 import PracticeSession from './pages/PracticeSession';
 import Calendar from './pages/Calendar/Calendar';
 import Analytics from './pages/Analytics/Analytics';
+import AILogs from './pages/AILogs';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -112,6 +113,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <Analytics />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/ai-logs"
+            element={
+              <ProtectedRoute>
+                <AILogs />
               </ProtectedRoute>
             }
           />

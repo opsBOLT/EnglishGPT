@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -8,9 +9,6 @@ import { motion } from 'framer-motion';
 import { Loader } from 'lucide-react';
 
 interface OnboardingData {
-  readingSkill?: string;
-  writingSkill?: string;
-  analysisSkill?: string;
   examStruggles?: string[];
   markingResult?: any;
   weaknessQuestionType?: string;
@@ -47,16 +45,7 @@ const StudyPlanGeneration = () => {
 
   const onboardingData = location.state?.onboardingData as OnboardingData | undefined;
 
-  useEffect(() => {
-    if (!user || !onboardingData) {
-      navigate('/dashboard');
-      return;
-    }
-
-    generatePlan();
-  }, [user, onboardingData]);
-
-  const generatePlan = async () => {
+  const generatePlan = useCallback(async () => {
     if (!onboardingData) return;
 
     try {
@@ -88,10 +77,19 @@ const StudyPlanGeneration = () => {
       setError(err instanceof Error ? err.message : 'Failed to generate study plan');
       setStatus('error');
     }
-  };
+  }, [navigate, onboardingData, user?.id]);
+
+  useEffect(() => {
+    if (!user || !onboardingData) {
+      navigate('/dashboard');
+      return;
+    }
+
+    generatePlan();
+  }, [user, onboardingData, generatePlan, navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "radial-gradient(125% 125% at 50% 10%, #fff 40%, #7c3aed 100%)" }}>
       <div className="w-full max-w-4xl space-y-8">
         {/* AI Orb */}
         <motion.div

@@ -2,6 +2,7 @@ import { Clock, ChevronRight } from 'lucide-react';
 import { Card, Flex, Text } from '@tremor/react';
 import { DailyTask } from '../../../types';
 import { Link } from 'react-router-dom';
+import { Button as ThreeDButton } from '../../../components/ui/3d-button';
 
 interface TodaysTasksProps {
   tasks: DailyTask[];
@@ -43,12 +44,25 @@ const TodaysTasks = ({ tasks }: TodaysTasksProps) => {
     return labels[category as keyof typeof labels] || category;
   };
 
+  const getSessionPath = (category: DailyTask['category']) => {
+    const studyCategoryMap: Record<DailyTask['category'], string> = {
+      paper1: 'Paper 1 Guide/Revision',
+      paper2: 'Paper 2 Guide/Revision',
+      examples: 'High-Level Example Responses',
+      text_types: 'Text Types Criteria',
+      vocabulary: 'Vocabulary Improvement',
+    };
+
+    const resolved = studyCategoryMap[category] || category;
+    return `/study/session/${encodeURIComponent(resolved)}`;
+  };
+
   return (
-    <Card className="rounded-3xl border-0 shadow-xl bg-white/90 backdrop-blur">
+    <Card className="rounded-3xl border-2 border-slate-200 outline outline-4 outline-slate-100/50 shadow-[0_10px_30px_rgba(15,23,42,0.12)] bg-white/90 backdrop-blur">
       <Flex justifyContent="between" alignItems="center" className="mb-6">
         <h3 className="font-semibold text-slate-900">Today&apos;s Study Tasks</h3>
-        <Link to="/study" className="text-sm font-semibold text-[#6f2dd2] hover:text-[#4b1fa2]">
-          View All
+        <Link to="/calendar" className="text-sm font-semibold text-[#6f2dd2] hover:text-[#4b1fa2]">
+          Open Calendar
         </Link>
       </Flex>
 
@@ -58,20 +72,19 @@ const TodaysTasks = ({ tasks }: TodaysTasksProps) => {
             <Clock className="w-8 h-8" />
           </div>
           <p className="text-slate-600 text-sm">No tasks scheduled for today</p>
-          <Link
-            to="/calendar"
-            className="mt-4 inline-flex items-center justify-center px-4 py-2 bg-[#aa80f3] text-white text-sm font-semibold rounded-xl shadow hover:shadow-lg transition-all"
-          >
-            Schedule tasks
-          </Link>
+          <ThreeDButton asChild className="mt-4">
+            <Link to="/calendar">
+              Schedule tasks
+            </Link>
+          </ThreeDButton>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {tasks.map((task) => (
             <Link
               key={task.id}
-              to={`/study?category=${task.category}`}
-              className="group rounded-2xl border border-slate-100 bg-slate-50/70 p-4 hover:-translate-y-1 transition-all hover:shadow-lg flex flex-col gap-3"
+              to={getSessionPath(task.category)}
+              className="group rounded-2xl border-2 border-slate-200 outline outline-4 outline-slate-100/40 bg-slate-50/70 p-4 hover:-translate-y-1 transition-all hover:shadow-[0_14px_28px_rgba(15,23,42,0.15)] shadow-sm flex flex-col gap-3"
             >
               <div className="flex items-start justify-between">
                 <span

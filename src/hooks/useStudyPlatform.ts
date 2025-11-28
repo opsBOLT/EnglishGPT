@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * React Hooks for EnglishGPT Study Platform
  * Provides easy-to-use hooks for all platform features
@@ -5,67 +6,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
-
-/**
- * Hook for managing student assessment
- */
-export function useAssessment(userId: string) {
-  const [assessment, setAssessment] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchAssessment = useCallback(async () => {
-    if (!userId) return;
-
-    setLoading(true);
-    setError(null);
-
-    const result = await api.getAssessment(userId);
-
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setAssessment(result.assessment);
-    }
-
-    setLoading(false);
-  }, [userId]);
-
-  const submitAssessment = useCallback(async (assessmentData: any) => {
-    setLoading(true);
-    setError(null);
-
-    const result = await api.submitAssessment(userId, assessmentData);
-
-    if (result.error) {
-      setError(result.error);
-      setLoading(false);
-      return false;
-    }
-
-    await fetchAssessment();
-    setLoading(false);
-    return true;
-  }, [userId, fetchAssessment]);
-
-  useEffect(() => {
-    fetchAssessment();
-  }, [fetchAssessment]);
-
-  return {
-    assessment,
-    loading,
-    error,
-    submitAssessment,
-    refetch: fetchAssessment,
-  };
-}
+import { regenerateStudyPlan, NormalizedStudyPlan } from '../services/studyPlan';
 
 /**
  * Hook for managing study plan
  */
 export function useStudyPlan(userId: string) {
-  const [plan, setPlan] = useState<any>(null);
+  const [plan, setPlan] = useState<NormalizedStudyPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,10 +26,9 @@ export function useStudyPlan(userId: string) {
 
     if (result.error) {
       setError(result.error);
-      // Provide an empty plan shape so downstream UI can still render without crashing
-      setPlan({ weeks: [] });
+      setPlan(null);
     } else {
-      setPlan(result.plan);
+      setPlan(result.plan as NormalizedStudyPlan);
     }
 
     setLoading(false);
@@ -100,7 +46,26 @@ export function useStudyPlan(userId: string) {
       return false;
     }
 
-    setPlan(result.plan);
+    setPlan(result.plan as NormalizedStudyPlan);
+    setLoading(false);
+    return true;
+  }, [userId]);
+
+  const regeneratePlan = useCallback(async () => {
+    if (!userId) return false;
+
+    setLoading(true);
+    setError(null);
+
+    const result = await regenerateStudyPlan(userId);
+
+    if (result.error) {
+      setError(result.error);
+      setLoading(false);
+      return false;
+    }
+
+    setPlan(result.plan || null);
     setLoading(false);
     return true;
   }, [userId]);
@@ -114,6 +79,7 @@ export function useStudyPlan(userId: string) {
     loading,
     error,
     generatePlan,
+    regeneratePlan,
     refetch: fetchPlan,
   };
 }
@@ -401,5 +367,112 @@ export function useAIMemory(userId: string) {
     loading,
     error,
     refetch: fetchMemory,
+  };
+}
+
+/**
+ * Hook for managing task completions
+ */
+export function useTaskCompletion(userId: string, planId: string) {
+  const [completions, setCompletions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchCompletions = useCallback(async () => {
+    if (!userId || !planId) return;
+
+    setLoading(true);
+    setError(null);
+
+    const result = await api.getTaskCompletions(userId, planId);
+
+    if (result.error) {
+      setError(result.error);
+      setCompletions([]);
+    } else {
+      setCompletions(result.completions || []);
+    }
+
+    setLoading(false);
+  }, [userId, planId]);
+
+  const markComplete = useCallback(async (
+    taskId: string,
+    weekNumber: number,
+    day: string,
+    metadata?: {
+      timeSpentMinutes?: number;
+      difficultyRating?: number;
+      notes?: string;
+    }
+  ) => {
+    setLoading(true);
+    setError(null);
+
+    const result = await api.completeTask(userId, planId, taskId, weekNumber, day, metadata);
+
+    if (result.success) {
+      await fetchCompletions();  // Refresh completions
+    } else {
+      setError(result.error || 'Failed to mark task complete');
+    }
+
+    setLoading(false);
+    return result.success;
+  }, [userId, planId, fetchCompletions]);
+
+  const isTaskComplete = useCallback((taskId: string) => {
+    return completions.some(c => c.task_id === taskId);
+  }, [completions]);
+
+  useEffect(() => {
+    fetchCompletions();
+  }, [fetchCompletions]);
+
+  return {
+    completions,
+    loading,
+    error,
+    markComplete,
+    isTaskComplete,
+    refetch: fetchCompletions,
+  };
+}
+
+/**
+ * Hook for getting user progress summary
+ */
+export function useProgressSummary(userId: string) {
+  const [summary, setSummary] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSummary = useCallback(async () => {
+    if (!userId) return;
+
+    setLoading(true);
+    setError(null);
+
+    const result = await api.getProgressSummary(userId);
+
+    if (result.error) {
+      setError(result.error);
+      setSummary(null);
+    } else {
+      setSummary(result.summary || null);
+    }
+
+    setLoading(false);
+  }, [userId]);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
+
+  return {
+    summary,
+    loading,
+    error,
+    refetch: fetchSummary,
   };
 }

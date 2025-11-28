@@ -1,36 +1,33 @@
 /**
  * Study Session Page
- * 3-column layout: AI Assistant (left) | Content Viewer (center) | Notes (right)
- * Integrates with backend services for session tracking and AI chat
+ * AI-powered study sessions with sections, notes, and quizzes
+ * Uses igcseGuides.ts as the knowledge base
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useStudySession, useStudyAI } from '../hooks/useStudyPlatform';
 import { useSessionTimer } from '../hooks/useSessionTimer';
-import { getCategoryById, type StudyCategory } from '../config/studyContent';
-import { GUIDE_SNIPPETS, IGCSE_MAIN_GUIDES } from '../data/igcseGuides';
-import { Button } from '../components/ui/button';
+import { generateStudySession, type StudySessionPlan, type QuizQuestion } from '../services/studyContent';
+import { getAINotes } from '../services/api';
+import { Button } from '../components/ui/3d-button';
 import { Card } from '../components/ui/card';
-import { Loader2, Send, Play, Pause, X, CheckCircle } from 'lucide-react';
+import { Loader2, Send, Play, Pause, X, CheckCircle, BookOpen, Brain } from 'lucide-react';
 import SnowballSpinner from '../components/SnowballSpinner';
 import SiriOrb from '../components/ui/siri-orb';
+import { motion } from 'framer-motion';
 
 interface StudySessionProps {
-  userId: string; // Pass from auth context
+  userId?: string;
 }
 
-interface WriterEffectSessionPlan {
-  sections: any[];
-  introduction: string;
-  goals: string[];
-}
-
-export function StudySession({ userId }: StudySessionProps) {
+export function StudySession({ userId: propsUserId }: StudySessionProps) {
   const { category } = useParams<{ category: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const userId = propsUserId || user?.id || '';
 
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [notes, setNotes] = useState('');
@@ -40,113 +37,85 @@ export function StudySession({ userId }: StudySessionProps) {
     correct: 0,
     incorrect: 0,
   });
-  const [sessionPlan, setSessionPlan] = useState<WriterEffectSessionPlan | null>(null);
+  const [sessionPlan, setSessionPlan] = useState<StudySessionPlan | null>(null);
   const [aiSessionLoading, setAiSessionLoading] = useState(false);
-  const [planNotice, setPlanNotice] = useState<string | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
 
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const isWriterEffect = category === 'writers-effect';
-
+  // Get guide key from category or search params
+  const guideKey = searchParams.get('guide') || category || 'paper1';
 
   // Backend integration
   const [sessionId, setSessionId] = useState<string | null>(null);
   const { startSession, updateSession, completeSession } = useStudySession(userId);
-  const aiCategory = isWriterEffect
-    ? ('Paper 1 Guide/Revision' as StudyCategory)
-    : (category as StudyCategory) || 'Paper 1 Guide/Revision';
   const { messages, sendMessage, loading: aiLoading } = useStudyAI(
     userId,
-    aiCategory
+    `${guideKey} Study` as any
   );
 
   // Timer
   const timer = useSessionTimer();
 
-  // Get category configuration
-  const categoryConfig = getCategoryById(category as StudyCategory);
-  const derivedSections = isWriterEffect && sessionPlan
-    ? sessionPlan.sections.map((section, idx) => ({
-        id: `we-${idx}`,
-        title: section.title,
-        description: section.notes,
-        duration: '10 mins',
-        type: 'interactive' as const,
-      }))
-    : categoryConfig?.sections || [];
-
-  const writerQuiz = isWriterEffect && sessionPlan
-    ? [
-        ...(sessionPlan.quiz || []).map((q, idx) => ({
-          id: `weq-top-${idx}`,
-          question: q.question,
-          type: 'text',
-          correctAnswer: q.answer,
-          explanation: q.answer,
-          points: 1,
-        })),
-        ...sessionPlan.sections.flatMap((section, sIdx) =>
-          (section.quiz || []).map((q, qIdx) => ({
-            id: `weq-${sIdx}-${qIdx}`,
-            question: q.question,
-            type: 'text',
-            correctAnswer: q.answer,
-            explanation: q.answer,
-            points: 1,
-          }))
-        ),
-      ]
-    : [];
-
-  // Start session on mount
+  // Start session and generate content on mount
   useEffect(() => {
-    if (!category && !isWriterEffect) {
-      navigate('/study');
-      return;
-    }
-
     let currentSessionId: string | null = null;
+    let canceled = false;
 
     const initSession = async () => {
-      const id = await startSession(category as string, 'study');
-      if (id) {
+      // Start session tracking
+      const id = await startSession(guideKey, 'study');
+      if (id && !canceled) {
         currentSessionId = id;
         setSessionId(id);
         timer.start();
       }
 
-      if (isWriterEffect) {
-        setAiSessionLoading(true);
-        try {
-          // TODO: Implement writer effect session generation
-          const plan: WriterEffectSessionPlan = {
-            sections: [],
-            introduction: 'Writer\'s Effect session coming soon!',
-            goals: ['Analyze language techniques', 'Understand writer\'s purpose']
-          };
-          setSessionPlan(plan);
-        } catch (error) {
-          console.error('[writer-effect] session build failed', error);
+      // Generate AI study session
+      setAiSessionLoading(true);
+      try {
+        // Fetch user's AI notes for personalization
+        const { notes: aiNotes } = await getAINotes(userId);
+        const userSummary = (aiNotes as any)?.onboarding_summary || '';
+
+        // Generate study session using igcseGuides
+        const { session, error } = await generateStudySession(
+          guideKey,
+          JSON.stringify(aiNotes),
+          userSummary
+        );
+
+        if (error || !session) {
+          throw new Error(error || 'Failed to generate study session');
+        }
+
+        if (!canceled) {
+          setSessionPlan(session);
+        }
+      } catch (error) {
+        console.error('[StudySession] Generation failed', error);
+        if (!canceled) {
           setPlanError(
-            error instanceof Error ? error.message : "Writer's Effect generation failed."
+            error instanceof Error ? error.message : 'Study session generation failed.'
           );
-        } finally {
+        }
+      } finally {
+        if (!canceled) {
           setAiSessionLoading(false);
         }
       }
     };
 
-    initSession();
+    void initSession();
 
-    // Cleanup on unmount
     return () => {
+      canceled = true;
       if (currentSessionId) {
-        handleEndSession();
+        void handleEndSession();
       }
     };
-  }, [category, handleEndSession, isWriterEffect, navigate, startSession, timer]);
+  }, [guideKey, userId]);
 
   // Auto-save notes every 10 seconds
   useEffect(() => {
@@ -191,10 +160,12 @@ export function StudySession({ userId }: StudySessionProps) {
 
   // Handle section completion
   const handleCompleteSection = () => {
-    if (!derivedSections.length) return;
+    if (!sessionPlan) return;
 
-    // Show quiz if available
-    if ((isWriterEffect && writerQuiz.length > 0) || (categoryConfig?.quizQuestions && categoryConfig.quizQuestions.length > 0)) {
+    const currentSection = sessionPlan.sections[currentSectionIndex];
+
+    // Show section quiz if available
+    if (currentSection.quiz && currentSection.quiz.length > 0) {
       setShowQuiz(true);
     } else {
       moveToNextSection();
@@ -203,20 +174,28 @@ export function StudySession({ userId }: StudySessionProps) {
 
   // Move to next section
   const moveToNextSection = () => {
-    if (!derivedSections.length) return;
+    if (!sessionPlan) return;
 
-    if (currentSectionIndex < derivedSections.length - 1) {
+    if (currentSectionIndex < sessionPlan.sections.length - 1) {
       setCurrentSectionIndex(prev => prev + 1);
       setShowQuiz(false);
     } else {
-      // All sections complete
-      handleEndSession();
+      // All sections complete, show final quiz
+      if (sessionPlan.quiz && sessionPlan.quiz.length > 0) {
+        setShowQuiz(true);
+        setCurrentSectionIndex(sessionPlan.sections.length); // Mark as final quiz
+      } else {
+        void handleEndSession();
+      }
     }
   };
 
   // Handle quiz completion
   const handleQuizComplete = async (correct: number, incorrect: number) => {
-    setQuizResults({ correct, incorrect });
+    setQuizResults(prev => ({
+      correct: prev.correct + correct,
+      incorrect: prev.incorrect + incorrect,
+    }));
 
     if (sessionId) {
       await updateSession(sessionId, {
@@ -226,20 +205,27 @@ export function StudySession({ userId }: StudySessionProps) {
     }
 
     // Check if passed (70% threshold)
-    const total = correct + incorrect || writerQuiz.length;
+    const total = correct + incorrect;
     const percentage = (correct / total) * 100;
 
     if (percentage >= 70) {
       setShowQuiz(false);
-      moveToNextSection();
-    } else {
-      alert('Please review the material and try again. You need 70% to continue.');
+
+      // Check if this was the final quiz
+      if (sessionPlan && currentSectionIndex >= sessionPlan.sections.length) {
+        void handleEndSession();
+      } else {
+        moveToNextSection();
+      }
     }
   };
 
   // End session
-  const handleEndSession = async () => {
-    if (!sessionId) return;
+  const handleEndSession = useCallback(async () => {
+    if (!sessionId) {
+      navigate('/study');
+      return;
+    }
 
     const durationMinutes = timer.stop();
 
@@ -247,108 +233,171 @@ export function StudySession({ userId }: StudySessionProps) {
     await updateSession(sessionId, {
       duration_minutes: durationMinutes,
       notes_made: notes,
-      revision_methods: ['video', 'notes'], // Track which methods were used
+      revision_methods: ['ai-session', 'notes'],
     });
 
-    // Complete session (triggers AI analysis if >30min)
+    // Complete session
     const analysis = await completeSession(sessionId);
 
-    if (analysis) {
-      alert(`Session completed! AI identified these areas to focus on: ${analysis.weak_topics.join(', ')}`);
+    if (analysis && (analysis as any).weak_topics) {
+      alert(`Session completed! AI identified these areas to focus on: ${(analysis as any).weak_topics.join(', ')}`);
     }
 
     navigate('/study');
-  };
+  }, [completeSession, navigate, notes, sessionId, timer, updateSession]);
 
-  if (!categoryConfig && !isWriterEffect) {
+  // Loading screen
+  if (aiSessionLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <SnowballSpinner size="md" label="Loading your study session..." />
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="space-y-8 text-center"
+        >
+          <SiriOrb size="200px" animationDuration={10} />
+          <div className="space-y-3">
+            <h2 className="text-3xl font-bold text-slate-900 sulphur-point-bold">
+              Creating your study session
+            </h2>
+            <p className="text-lg text-slate-600 max-w-md mx-auto sulphur-point-regular">
+              AI is analyzing the IGCSE guides and personalizing content just for you...
+            </p>
+          </div>
+          <SnowballSpinner size="sm" label="" />
+        </motion.div>
       </div>
     );
   }
 
-  if (isWriterEffect && aiSessionLoading) {
+  // Error screen
+  if (planError) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="space-y-6 text-center">
-          <SiriOrb size="180px" />
-          <h2 className="text-2xl font-bold text-gray-900">Let&apos;s start this Writer&apos;s Effect session</h2>
-          <p className="text-gray-600 max-w-md mx-auto">
-            Building a short drill with your notes and examples. Hang tight.
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="space-y-4 text-center max-w-md bg-white p-8 rounded-2xl shadow-lg">
+          <h2 className="text-2xl font-bold text-slate-900 sulphur-point-bold">
+            Session generation failed
+          </h2>
+          <p className="text-slate-700 sulphur-point-regular">{planError}</p>
+          <p className="text-sm text-slate-500">
+            Check your API configuration and try again.
           </p>
-        </div>
-      </div>
-    );
-  }
-  if (isWriterEffect && planError) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="space-y-3 text-center max-w-md">
-          <h2 className="text-2xl font-bold text-gray-900">Writer&apos;s Effect session failed</h2>
-          <p className="text-gray-700">{planError}</p>
-          <p className="text-sm text-gray-500">Check your OpenRouter API key and try again.</p>
+          <Button onClick={() => navigate('/study')}>
+            Back to Study
+          </Button>
         </div>
       </div>
     );
   }
 
-  const currentSection = derivedSections[currentSectionIndex];
-  if (!currentSection) {
+  // No session plan
+  if (!sessionPlan) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="space-y-3 text-center">
-          <h2 className="text-2xl font-bold text-gray-900">No section loaded</h2>
-          <p className="text-gray-600">This session has no content. Try restarting the task.</p>
-        </div>
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <SnowballSpinner size="lg" label="Loading session..." />
       </div>
     );
   }
 
-  const progress = derivedSections.length
-    ? ((currentSectionIndex + 1) / derivedSections.length) * 100
+  const currentSection = sessionPlan.sections[currentSectionIndex];
+  const isFinalQuiz = currentSectionIndex >= sessionPlan.sections.length;
+  const progress = sessionPlan.sections.length
+    ? ((currentSectionIndex + 1) / (sessionPlan.sections.length + (sessionPlan.quiz ? 1 : 0))) * 100
     : 0;
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      <div className="flex flex-1">
-        {/* Left: Orb + Chat */}
-        <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-lg">AI Study Assistant</h3>
-              <SiriOrb size="64px" />
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 sulphur-point-bold">
+              {sessionPlan.topic}
+            </h1>
+            <p className="text-sm text-slate-600 sulphur-point-regular">
+              AI-powered study session
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <div className="text-2xl font-mono font-bold text-slate-900">
+                {String(timer.hours).padStart(2, '0')}:
+                {String(timer.minutes).padStart(2, '0')}:
+                {String(timer.seconds).padStart(2, '0')}
+              </div>
+              <div className="text-xs text-slate-500">
+                {timer.isPaused ? 'Paused' : 'Active'}
+              </div>
             </div>
-            <p className="text-sm text-gray-600">Ask about Writer&apos;s Effect notes.</p>
-            {planNotice && (
-              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
-                {planNotice}
-              </p>
+            {timer.isPaused ? (
+              <Button onClick={timer.resume} variant="outline" size="sm">
+                <Play className="w-4 h-4 mr-1" /> Resume
+              </Button>
+            ) : (
+              <Button onClick={timer.pause} variant="outline" size="sm">
+                <Pause className="w-4 h-4 mr-1" /> Pause
+              </Button>
             )}
+            <Button onClick={handleEndSession} variant="outline_destructive" size="sm">
+              <X className="w-4 h-4 mr-1" /> End
+            </Button>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="max-w-7xl mx-auto mt-4">
+          <div className="w-full bg-slate-200 rounded-full h-3">
+            <div
+              className="bg-[#aa08f3] h-3 rounded-full transition-all duration-500 shadow-lg"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-sm text-slate-600 mt-2 sulphur-point-regular">
+            {isFinalQuiz ? 'Final Quiz' : `Section ${currentSectionIndex + 1} of ${sessionPlan.sections.length}`}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left: AI Assistant */}
+        <div className="w-1/3 bg-white border-r border-slate-200 flex flex-col">
+          <div className="p-6 border-b border-slate-200 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-lg sulphur-point-bold text-slate-900">
+                  AI Study Assistant
+                </h3>
+                <p className="text-sm text-slate-600 sulphur-point-regular">
+                  Ask about the content
+                </p>
+              </div>
+              <SiriOrb size="72px" animationDuration={20} />
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.length === 0 && (
-              <div className="text-center text-gray-500 mt-8">
-                <p className="mb-4">Try asking:</p>
+              <div className="text-center text-slate-500 mt-8">
+                <Brain className="w-12 h-12 mx-auto mb-4 text-[#aa08f3]" />
+                <p className="mb-4 sulphur-point-regular">Try asking:</p>
                 <div className="space-y-2 text-sm">
                   <button
-                    className="block w-full p-2 bg-gray-100 rounded hover:bg-gray-200 text-left"
-                    onClick={() => setAiInput("How do I identify writer's effect?")}
+                    className="block w-full p-3 bg-slate-50 rounded-xl hover:bg-slate-100 text-left transition-colors sulphur-point-regular"
+                    onClick={() => setAiInput("Explain this section in simpler terms")}
                   >
-                    How do I identify writer's effect?
+                    Explain this section simpler
                   </button>
                   <button
-                    className="block w-full p-2 bg-gray-100 rounded hover:bg-gray-200 text-left"
-                    onClick={() => setAiInput('How do I pick 3 images quickly?')}
+                    className="block w-full p-3 bg-slate-50 rounded-xl hover:bg-slate-100 text-left transition-colors sulphur-point-regular"
+                    onClick={() => setAiInput('Give me an example')}
                   >
-                    Picking images fast
+                    Give me an example
                   </button>
                   <button
-                    className="block w-full p-2 bg-gray-100 rounded hover:bg-gray-200 text-left"
-                    onClick={() => setAiInput('Can you test me on connotation vs effect?')}
+                    className="block w-full p-3 bg-slate-50 rounded-xl hover:bg-slate-100 text-left transition-colors sulphur-point-regular"
+                    onClick={() => setAiInput('How will this help in the exam?')}
                   >
-                    Test me on connotation vs effect
+                    How will this help in the exam?
                   </button>
                 </div>
               </div>
@@ -357,28 +406,32 @@ export function StudySession({ userId }: StudySessionProps) {
             {messages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`p-3 rounded-lg ${
-                  msg.role === 'user' ? 'bg-blue-50 ml-4' : 'bg-gray-100 mr-4'
+                className={`p-4 rounded-xl ${
+                  msg.role === 'user'
+                    ? 'bg-[#aa08f3]/10 ml-8 border-2 border-[#aa08f3]/20'
+                    : 'bg-slate-100 mr-8'
                 }`}
               >
-                <p className="text-sm font-medium mb-1">
+                <p className="text-sm font-semibold mb-1 sulphur-point-bold text-slate-900">
                   {msg.role === 'user' ? 'You' : 'AI Assistant'}
                 </p>
-                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                <p className="text-sm whitespace-pre-wrap sulphur-point-regular text-slate-700">
+                  {msg.content}
+                </p>
               </div>
             ))}
 
             {aiLoading && (
-              <div className="flex items-center gap-2 text-gray-500">
+              <div className="flex items-center gap-2 text-slate-500">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm">AI is thinking...</span>
+                <span className="text-sm sulphur-point-regular">AI is thinking...</span>
               </div>
             )}
 
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-6 border-t border-slate-200">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -386,13 +439,13 @@ export function StudySession({ userId }: StudySessionProps) {
                 onChange={(e) => setAiInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAskAI()}
                 placeholder="Ask a question..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#aa08f3] focus:border-transparent sulphur-point-regular"
                 disabled={aiLoading}
               />
               <Button
                 onClick={handleAskAI}
                 disabled={aiLoading || !aiInput.trim()}
-                className="bg-blue-600 hover:bg-blue-700"
+                size="default"
               >
                 <Send className="w-4 h-4" />
               </Button>
@@ -400,130 +453,96 @@ export function StudySession({ userId }: StudySessionProps) {
           </div>
         </div>
 
-        {/* Right: Notes / Guides / Sections */}
-        <div className="flex-1 flex flex-col">
-          <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">{currentSection.title}</h2>
-              <p className="text-gray-600">Rich notes pulled from Writer&apos;s Effect exemplars.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-2xl font-mono">
-                  {String(timer.hours).padStart(2, '0')}:
-                  {String(timer.minutes).padStart(2, '0')}:
-                  {String(timer.seconds).padStart(2, '0')}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {timer.isPaused ? 'Paused' : 'Active'}
-                </div>
-              </div>
-              {timer.isPaused ? (
-                <Button onClick={timer.resume} variant="outline" size="sm">
-                  <Play className="w-4 h-4 mr-1" /> Resume
-                </Button>
-              ) : (
-                <Button onClick={timer.pause} variant="outline" size="sm">
-                  <Pause className="w-4 h-4 mr-1" /> Pause
-                </Button>
-              )}
-              <Button onClick={handleEndSession} variant="outline" size="sm">
-                <X className="w-4 h-4 mr-1" /> End Session
-              </Button>
-            </div>
-          </div>
-
-          <div className="p-4 border-b border-gray-200">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className="text-sm text-gray-600 mt-1">
-              Section {currentSectionIndex + 1} of {derivedSections.length}
-            </p>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-6">
-            {!showQuiz ? (
-              <Card className="max-w-4xl mx-auto p-6 space-y-6">
-                {isWriterEffect ? (
-                  <div className="space-y-4">
-                    {(sessionPlan?.sections || []).map((section, idx) => (
-                      <div key={section.title} className="space-y-2">
-                        <p className="text-xs font-semibold text-gray-500">Section {idx + 1}</p>
-                        <h3 className="text-xl font-semibold text-gray-900">{section.title}</h3>
-                        <p className="text-gray-800 leading-relaxed whitespace-pre-line">
-                          {section.notes}
-                        </p>
-                      </div>
-                    ))}
+        {/* Right: Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-8">
+            {!showQuiz && currentSection ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-4xl mx-auto"
+              >
+                <Card className="p-8 space-y-6 bg-white shadow-lg">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-[#aa08f3]/10 rounded-xl">
+                      <BookOpen className="w-8 h-8 text-[#aa08f3]" />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-3xl font-bold text-slate-900 mb-2 sulphur-point-bold">
+                        {currentSection.title}
+                      </h2>
+                      <p className="text-slate-600 sulphur-point-regular">
+                        Study this section carefully, then test your understanding
+                      </p>
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-gray-700">{currentSection.description}</p>
-                    <p className="text-sm text-gray-500">
-                      Work through this section, then mark as complete.
-                    </p>
-                  </div>
-                )}
 
-                <div className="flex justify-between items-center">
-                  <div className="text-sm text-gray-600">Duration: {currentSection.duration}</div>
-                  <Button
-                    onClick={handleCompleteSection}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    Complete Section <CheckCircle className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-              </Card>
-            ) : (
+                  <div className="prose prose-slate max-w-none">
+                    <div className="text-slate-700 leading-relaxed whitespace-pre-line sulphur-point-regular text-base">
+                      {currentSection.notes}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <Button
+                      onClick={handleCompleteSection}
+                      className="gap-2"
+                      size="lg"
+                    >
+                      {currentSection.quiz && currentSection.quiz.length > 0
+                        ? 'Take Section Quiz'
+                        : 'Continue to Next Section'}
+                      <CheckCircle className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </Card>
+              </motion.div>
+            ) : showQuiz ? (
               <StudyQuiz
-                questions={isWriterEffect ? writerQuiz : categoryConfig?.quizQuestions || []}
+                questions={
+                  isFinalQuiz
+                    ? sessionPlan.quiz || []
+                    : currentSection?.quiz || []
+                }
                 onComplete={handleQuizComplete}
+                isFinal={isFinalQuiz}
               />
-            )}
+            ) : null}
           </div>
-        </div>
-      </div>
 
-      {/* Bottom: User notes */}
-      <div className="border-t border-gray-200 bg-white p-4">
-        <div className="max-w-5xl mx-auto space-y-2">
-          <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-gray-900">Your notes</h4>
-            <span className="text-xs text-gray-500">{notes.length} characters</span>
+          {/* Bottom: User notes */}
+          <div className="border-t border-slate-200 bg-white p-6">
+            <div className="max-w-4xl mx-auto space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-slate-900 sulphur-point-bold">Your Notes</h4>
+                <span className="text-xs text-slate-500 sulphur-point-regular">
+                  {notes.length} characters
+                </span>
+              </div>
+              <textarea
+                ref={notesRef}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Write your notes here. They'll be saved automatically."
+                className="w-full min-h-[120px] p-4 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#aa08f3] focus:border-transparent text-sm sulphur-point-regular resize-none"
+              />
+            </div>
           </div>
-          <textarea
-            ref={notesRef}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Capture the key phrases and effects you’ll reuse. This stays in this session."
-            className="w-full min-h-[140px] p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          />
         </div>
       </div>
     </div>
   );
 }
 
-// Quiz Component (inline for now, can be extracted)
+// Quiz Component
 function StudyQuiz({
   questions,
   onComplete,
+  isFinal = false,
 }: {
-  questions: Array<{
-    id: string;
-    question: string;
-    type: string;
-    options?: string[];
-    correctAnswer: string | string[];
-    explanation?: string;
-    points?: number;
-  }>;
+  questions: QuizQuestion[];
   onComplete: (correct: number, incorrect: number) => void;
+  isFinal?: boolean;
 }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -576,92 +595,112 @@ function StudyQuiz({
     const percentage = Math.round((correct / total) * 100);
 
     return (
-      <Card className="max-w-2xl mx-auto p-8">
-        <h3 className="text-2xl font-bold mb-4">Quiz Results</h3>
-        <div className="text-center mb-6">
-          <div className="text-5xl font-bold mb-2">{percentage}%</div>
-          <p className="text-gray-600">
-            {correct} out of {total} correct
-          </p>
-        </div>
-
-        {percentage >= 70 ? (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-            <p className="text-green-800">
-              ✓ Great job! You've passed this section and can continue.
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-2xl mx-auto"
+      >
+        <Card className="p-8 bg-white shadow-lg">
+          <h3 className="text-3xl font-bold mb-6 sulphur-point-bold text-slate-900">
+            {isFinal ? 'Final Quiz Results' : 'Quiz Results'}
+          </h3>
+          <div className="text-center mb-8">
+            <div className="text-7xl font-bold mb-3" style={{ color: percentage >= 70 ? '#10b981' : '#f59e0b' }}>
+              {percentage}%
+            </div>
+            <p className="text-xl text-slate-600 sulphur-point-regular">
+              {correct} out of {total} correct
             </p>
           </div>
-        ) : (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-            <p className="text-yellow-800">
-              Please review the material and try again. You need 70% to continue.
-            </p>
-          </div>
-        )}
 
-        <Button
-          onClick={handleSubmit}
-          className="w-full bg-purple-600 hover:bg-purple-700"
-        >
-          {percentage >= 70 ? 'Continue to Next Section' : 'Try Again'}
-        </Button>
-      </Card>
+          {percentage >= 70 ? (
+            <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-6 mb-6">
+              <p className="text-emerald-800 sulphur-point-regular text-lg">
+                ✓ Excellent work! You've demonstrated strong understanding.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-6 mb-6">
+              <p className="text-amber-800 sulphur-point-regular text-lg">
+                Review the material and try again. You need 70% to continue.
+              </p>
+            </div>
+          )}
+
+          <Button
+            onClick={handleSubmit}
+            className="w-full"
+            size="lg"
+          >
+            {percentage >= 70 ? (isFinal ? 'Complete Session' : 'Continue to Next Section') : 'Try Again'}
+          </Button>
+        </Card>
+      </motion.div>
     );
   }
 
   return (
-    <Card className="max-w-2xl mx-auto p-8">
-      <div className="mb-6">
-        <p className="text-sm text-gray-600 mb-2">
-          Question {currentQuestionIndex + 1} of {questions.length}
-        </p>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-purple-600 h-2 rounded-full transition-all"
-            style={{
-              width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
-            }}
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="max-w-2xl mx-auto"
+    >
+      <Card className="p-8 bg-white shadow-lg">
+        <div className="mb-6">
+          <p className="text-sm text-slate-600 mb-3 sulphur-point-regular">
+            Question {currentQuestionIndex + 1} of {questions.length}
+          </p>
+          <div className="w-full bg-slate-200 rounded-full h-2">
+            <div
+              className="bg-[#aa08f3] h-2 rounded-full transition-all duration-300"
+              style={{
+                width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        <h3 className="text-2xl font-semibold mb-6 sulphur-point-bold text-slate-900">
+          {currentQuestion.question}
+        </h3>
+
+        {currentQuestion.type === 'multiple-choice' && (
+          <div className="space-y-3 mb-6">
+            {currentQuestion.options?.map((option: string, idx: number) => (
+              <button
+                key={idx}
+                onClick={() => handleAnswer(option)}
+                className={`w-full p-5 text-left rounded-xl border-2 transition-all sulphur-point-regular ${
+                  answers[currentQuestion.id] === option
+                    ? 'border-[#aa08f3] bg-[#aa08f3]/10 shadow-md'
+                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {(currentQuestion.type === 'short-answer' || currentQuestion.type === 'text') && (
+          <textarea
+            value={answers[currentQuestion.id] || ''}
+            onChange={(e) => handleAnswer(e.target.value)}
+            placeholder="Type your answer here..."
+            className="w-full p-5 border-2 border-slate-200 rounded-xl mb-6 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[#aa08f3] focus:border-transparent sulphur-point-regular"
           />
-        </div>
-      </div>
+        )}
 
-      <h3 className="text-xl font-semibold mb-4">{currentQuestion.question}</h3>
-
-      {currentQuestion.type === 'multiple-choice' && (
-        <div className="space-y-3 mb-6">
-          {currentQuestion.options?.map((option: string, idx: number) => (
-            <button
-              key={idx}
-              onClick={() => handleAnswer(option)}
-              className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
-                answers[currentQuestion.id] === option
-                  ? 'border-purple-600 bg-purple-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {(currentQuestion.type === 'short-answer' || currentQuestion.type === 'text') && (
-        <textarea
-          value={answers[currentQuestion.id] || ''}
-          onChange={(e) => handleAnswer(e.target.value)}
-          placeholder="Type your answer here..."
-          className="w-full p-4 border-2 border-gray-200 rounded-lg mb-6 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-purple-500"
-        />
-      )}
-
-      <Button
-        onClick={handleNext}
-        disabled={!answers[currentQuestion.id]}
-        className="w-full bg-purple-600 hover:bg-purple-700"
-      >
-        {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'See Results'}
-      </Button>
-    </Card>
+        <Button
+          onClick={handleNext}
+          disabled={!answers[currentQuestion.id]}
+          className="w-full"
+          size="lg"
+        >
+          {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'See Results'}
+        </Button>
+      </Card>
+    </motion.div>
   );
 }
 

@@ -4080,51 +4080,83 @@ This is the hallmark of an excellent communicator and writer.
   }
 ];
 
-// Lightweight snippets for targeted tasks
-export type GuideSnippet = {
-  id: string;
-  title: string;
-  focus: string;
-  quickNotes: string[];
-  bullets: string[];
-  promptContext?: string;
-};
-
-export const GUIDE_SNIPPETS: Record<string, GuideSnippet> = {
-  writers_effect: {
-    id: 'writers_effect',
-    title: "Writer's Effect",
-    focus: 'Pick three images, explain meaning + connotation + effect.',
-    quickNotes: [
-      'Overall effect sentence first.',
-      '3 images per paragraph; quote small.',
-      'Meaning → connotation → reader effect.',
-    ],
-    bullets: [
-      'Lead with the effect: tension, contrast, awe, danger.',
-      'Quote tightly; avoid long phrases.',
-      'Use verbs/adjectives from the text; avoid vague words.',
-      'Link every effect back to the question focus.',
-    ],
-    promptContext:
-      "You are building a focused Writer's Effect session. Use three images per paragraph, analyse meaning, connotation, and reader effect. Keep guidance concise and exam-ready. Include a short quiz (4-5 questions) on spotting effect and explaining impact.",
-  },
-};
-
-export type GuideTask = {
-  id: string;
-  label: string;
-  subtitle: string;
-  categorySlug: string;
+// Structured lookup of every markdown heading so the AI can pull specific sections
+export type GuideSection = {
+  id: string; // guideKey.slugifiedHeading
   guideKey: string;
+  heading: string;
+  level: number;
+  content: string;
 };
 
-export const PRIORITY_TASKS: GuideTask[] = [
-  {
-    id: 'writers-effect',
-    label: "Writer's effect drill",
-    subtitle: '3 images → meaning + effect',
-    categorySlug: 'writers-effect',
-    guideKey: 'writers_effect',
-  },
-];
+const headingRegex = /^(#{1,6})\s+(.*)$/gm;
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
+const extractSectionsFromGuide = (guide: IgcseGuide): GuideSection[] => {
+  const matches = Array.from(guide.content.matchAll(headingRegex));
+
+  if (!matches.length) {
+    return [
+      {
+        id: `${guide.key}.full-guide`,
+        guideKey: guide.key,
+        heading: guide.title,
+        level: 1,
+        content: guide.content.trim(),
+      },
+    ];
+  }
+
+  return matches.map((match, index) => {
+    const start = match.index ?? 0;
+    const end = matches[index + 1]?.index ?? guide.content.length;
+    const heading = match[2].trim();
+    const level = match[1].length;
+
+    return {
+      id: `${guide.key}.${slugify(heading)}`,
+      guideKey: guide.key,
+      heading,
+      level,
+      content: guide.content.slice(start, end).trim(),
+    };
+  });
+};
+
+export const IGCSE_GUIDE_SECTIONS: GuideSection[] = IGCSE_MAIN_GUIDES.flatMap(
+  extractSectionsFromGuide
+);
+
+export const IGCSE_GUIDE_SECTION_LOOKUP: Record<string, GuideSection> =
+  IGCSE_GUIDE_SECTIONS.reduce((acc, section) => {
+    acc[section.id] = section;
+    return acc;
+  }, {} as Record<string, GuideSection>);
+
+const normalizeSectionToken = (token: string): string | null => {
+  if (!token) return null;
+  const trimmed = token.replace(/^\$+|\$+$/g, '');
+
+  // Support "$section$paper1" style tokens as well as "paper1.section"
+  if (trimmed.includes('$')) {
+    const [sectionSlug, guideKey] = trimmed.split('$').filter(Boolean);
+    if (sectionSlug && guideKey) {
+      return `${guideKey}.${slugify(sectionSlug)}`;
+    }
+  }
+
+  return trimmed.includes('.') ? trimmed.toLowerCase() : null;
+};
+
+export const getGuideSectionByToken = (
+  token: string
+): GuideSection | undefined => {
+  const normalized = normalizeSectionToken(token);
+  if (!normalized) return undefined;
+  return IGCSE_GUIDE_SECTION_LOOKUP[normalized];
+};

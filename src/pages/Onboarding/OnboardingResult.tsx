@@ -125,7 +125,7 @@ const OnboardingResult = () => {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f3f4f8' }}>
+    <div className="min-h-screen" style={{ background: "radial-gradient(125% 125% at 50% 10%, #fff 40%, #7c3aed 100%)" }}>
       <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 text-slate-900">
         <section className="bg-white border border-slate-200 rounded-3xl shadow-sm p-6 md:p-8 space-y-6">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -166,9 +166,6 @@ const OnboardingResult = () => {
                   navigate('/study-plan/generate', {
                     state: {
                       onboardingData: {
-                        readingSkill: 'B',
-                        writingSkill: 'B',
-                        analysisSkill: 'B',
                         examStruggles: state?.examStruggles || [],
                         markingResult: resolvedResult,
                         weaknessQuestionType: resolvedQuestionType || '',

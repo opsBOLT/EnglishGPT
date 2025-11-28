@@ -1,36 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 /**
  * API Service Layer
  * Handles all backend operations for the IGCSE English Study Platform
  */
 
 import { supabase } from '../lib/supabase';
-import type { Database } from '../types/supabase';
-
-type StudentAssessment = Database['public']['Tables']['student_assessment']['Insert'];
-
-/**
- * Submit student initial assessment
- */
-export async function submitAssessment(
-  userId: string,
-  assessment: Omit<StudentAssessment, 'user_id'>
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const { error } = await supabase
-      .from('student_assessment')
-      .upsert({
-        user_id: userId,
-        ...assessment,
-      });
-
-    if (error) throw error;
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error submitting assessment:', error);
-    return { success: false, error: (error as Error).message };
-  }
-}
 
 /**
  * Parse AI notes section from the structured summary text.
@@ -345,26 +319,6 @@ export async function getAINotes(userId: string): Promise<{ notes?: unknown; err
 }
 
 /**
- * Get user's assessment
- */
-export async function getAssessment(userId: string): Promise<{ assessment?: unknown; error?: string }> {
-  try {
-    const { data, error } = await supabase
-      .from('student_assessment')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (error) throw error;
-
-    return { assessment: data };
-  } catch (error) {
-    console.error('Error fetching assessment:', error);
-    return { error: (error as Error).message };
-  }
-}
-
-/**
  * Get user's study sessions
  */
 export async function getStudySessions(userId: string, limit = 10): Promise<{ sessions?: unknown[]; error?: string }> {
@@ -419,5 +373,178 @@ export async function getPracticeSessions(userId: string, limit = 10): Promise<{
 
     console.error('Error fetching practice sessions:', friendlyMessage);
     return { sessions: [], error: friendlyMessage };
+  }
+}
+
+/**
+ * Mark a task as complete
+ */
+export async function completeTask(
+  userId: string,
+  planId: string,
+  taskId: string,
+  weekNumber: number,
+  day: string,
+  metadata?: {
+    timeSpentMinutes?: number;
+    difficultyRating?: number;
+    notes?: string;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('task_completions')
+      .insert({
+        user_id: userId,
+        plan_id: planId,
+        task_id: taskId,
+        week_number: weekNumber,
+        day: day,
+        time_spent_minutes: metadata?.timeSpentMinutes,
+        difficulty_rating: metadata?.difficultyRating,
+        notes: metadata?.notes,
+      });
+
+    if (error) {
+      // If it's a duplicate key error, that's okay - task already completed
+      if (error.code === '23505') {
+        console.log('[completeTask] Task already completed:', taskId);
+        return { success: true };
+      }
+      throw error;
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error completing task:', error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+/**
+ * Get completion status for all tasks in a plan
+ */
+export async function getTaskCompletions(
+  userId: string,
+  planId: string
+): Promise<{ completions?: Array<{
+  id: string;
+  task_id: string;
+  week_number: number;
+  day: string;
+  completed_at: string;
+  time_spent_minutes?: number;
+  difficulty_rating?: number;
+  notes?: string;
+}>; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('task_completions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('plan_id', planId)
+      .order('completed_at', { ascending: false });
+
+    if (error) throw error;
+
+    return { completions: data as any };
+  } catch (error) {
+    console.error('Error fetching task completions:', error);
+    return { error: (error as Error).message };
+  }
+}
+
+/**
+ * Get progress summary for a user
+ */
+export async function getProgressSummary(
+  userId: string
+): Promise<{ summary?: {
+  totalTasks: number;
+  completedTasks: number;
+  completionRate: number;
+  currentWeek: number;
+  totalWeeks: number;
+  categoryBreakdown: Record<string, number>;
+  averageTimeSpent: number;
+  consistencyScore: number;
+}; error?: string }> {
+  try {
+    // Get active study plan
+    const { data: planData, error: planError } = await supabase
+      .from('study_plan')
+      .select('id, plan_data')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (planError) throw planError;
+    if (!planData) {
+      return { summary: {
+        totalTasks: 0,
+        completedTasks: 0,
+        completionRate: 0,
+        currentWeek: 1,
+        totalWeeks: 0,
+        categoryBreakdown: {},
+        averageTimeSpent: 0,
+        consistencyScore: 0,
+      }};
+    }
+
+    const plan = planData.plan_data as any;
+    const planId = plan.plan_id || planData.id;
+
+    // Get all completions
+    const { completions } = await getTaskCompletions(userId, planId);
+
+    // Calculate total tasks from plan
+    let totalTasks = 0;
+    if (plan.weeks) {
+      plan.weeks.forEach((week: any) => {
+        week.daily_tasks?.forEach((day: any) => {
+          totalTasks += day.tasks?.length || 0;
+        });
+      });
+    }
+
+    const completedCount = completions?.length || 0;
+    const completionRate = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
+
+    // Calculate category breakdown (simplified - would need task data from plan)
+    const categoryBreakdown: Record<string, number> = {
+      completed: completedCount,
+    };
+
+    // Calculate average time spent
+    const tasksWithTime = completions?.filter(c => c.time_spent_minutes) || [];
+    const averageTimeSpent = tasksWithTime.length > 0
+      ? tasksWithTime.reduce((sum, c) => sum + (c.time_spent_minutes || 0), 0) / tasksWithTime.length
+      : 0;
+
+    // Calculate consistency score (simplified - based on completion rate and regularity)
+    const consistencyScore = completionRate;
+
+    // Determine current week (simplified - would calculate based on dates)
+    const currentWeek = Math.min(
+      Math.floor((completedCount / (totalTasks / (plan.targets?.time_frame_weeks || 8))) || 0) + 1,
+      plan.targets?.time_frame_weeks || 8
+    );
+
+    return {
+      summary: {
+        totalTasks,
+        completedTasks: completedCount,
+        completionRate,
+        currentWeek,
+        totalWeeks: plan.targets?.time_frame_weeks || 8,
+        categoryBreakdown,
+        averageTimeSpent,
+        consistencyScore,
+      }
+    };
+  } catch (error) {
+    console.error('Error calculating progress summary:', error);
+    return { error: (error as Error).message };
   }
 }

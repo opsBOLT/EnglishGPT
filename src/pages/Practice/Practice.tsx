@@ -1,68 +1,128 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
-import { Target, Book, Star } from 'lucide-react';
+import { FileText, Palette, BookOpen } from 'lucide-react';
+import { Button as ThreeDButton } from '../../components/ui/3d-button';
+import { getAllPracticeGuides, getQuestionTypeColor } from '../../services/practiceContent';
+import { motion } from 'framer-motion';
 
 const Practice = () => {
+  const navigate = useNavigate();
+  const guides = getAllPracticeGuides();
+
+  const handleStartPractice = (guideKey: string) => {
+    navigate(`/practice/session?type=${guideKey}`);
+  };
+
+  const icons = {
+    directed_writing: FileText,
+    descriptive_writing: Palette,
+    narrative_writing: BookOpen,
+  };
+
   return (
     <MainLayout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Practice Zone</h1>
-          <p className="text-gray-600">
-            Sharpen your skills with personalized practice and past papers
+          <h1 className="text-4xl font-bold text-slate-900 mb-2 sulphur-point-bold">
+            Practice Zone
+          </h1>
+          <p className="text-slate-600 sulphur-point-regular text-lg">
+            Master Paper 2 writing with AI-powered practice sessions
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl shadow-sm p-8 text-white">
-            <div className="w-16 h-16 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mb-6">
-              <Target className="w-8 h-8" />
-            </div>
-            <h2 className="text-2xl font-bold mb-3">Personalized Practice</h2>
-            <p className="text-blue-100 mb-6">
-              AI-generated questions tailored to your weaknesses and learning style
-            </p>
-            <button className="w-full bg-white text-blue-600 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors">
-              Start Personalized Practice
-            </button>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {guides.map((guide, idx) => {
+            const Icon = icons[guide.key as keyof typeof icons];
+            const color = getQuestionTypeColor(guide.key);
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-6">
-              <Book className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Past Papers</h2>
-            <p className="text-gray-600 mb-6">
-              Practice with real exam questions from previous years
-            </p>
-            <button className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-lg font-medium hover:from-green-600 hover:to-emerald-600 transition-colors">
-              Browse Past Papers
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <Star className="w-6 h-6 text-yellow-500" />
-            <h3 className="text-lg font-semibold text-gray-900">Recommended for You</h3>
-          </div>
-          <p className="text-gray-600 mb-6">
-            Based on your recent study sessions and quiz performance, we recommend focusing on these areas:
-          </p>
-          <div className="space-y-3">
-            {[
-              'Literary device identification in poetry',
-              'Comparative essay structure',
-              'Time management in timed writing',
-            ].map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            return (
+              <motion.div
+                key={guide.key}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                className="bg-white rounded-2xl border-2 border-slate-200 shadow-lg hover:shadow-xl transition-all p-8 flex flex-col"
               >
-                <span className="text-gray-900">{item}</span>
-                <button className="text-blue-600 font-medium hover:text-blue-700">Practice</button>
+                <div
+                  className="w-16 h-16 rounded-xl flex items-center justify-center mb-6"
+                  style={{ backgroundColor: `${color}20` }}
+                >
+                  <Icon className="w-8 h-8" style={{ color }} />
+                </div>
+
+                <h2 className="text-2xl font-bold text-slate-900 mb-2 sulphur-point-bold">
+                  {guide.title}
+                </h2>
+
+                <p className="text-sm text-slate-500 mb-3 sulphur-point-regular">
+                  {guide.label}
+                </p>
+
+                <p className="text-slate-700 mb-4 flex-1 sulphur-point-regular">
+                  {guide.description}
+                </p>
+
+                <div className="bg-slate-50 rounded-lg p-3 mb-6">
+                  <p className="text-sm text-slate-600 sulphur-point-regular">
+                    <span className="font-semibold text-slate-900">
+                      {guide.questionCount} questions
+                    </span>{' '}
+                    available from past papers
+                  </p>
+                </div>
+
+                <ThreeDButton
+                  onClick={() => handleStartPractice(guide.key)}
+                  stretch
+                  variant="ai"
+                  size="lg"
+                >
+                  Start Practice
+                </ThreeDButton>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <div className="mt-12 bg-gradient-to-br from-[#aa08f3]/10 to-[#aa08f3]/5 rounded-2xl border-2 border-[#aa08f3]/20 p-8">
+          <h3 className="text-2xl font-bold text-slate-900 mb-4 sulphur-point-bold">
+            How AI Practice Works
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <div className="w-10 h-10 bg-[#aa08f3] text-white rounded-lg flex items-center justify-center font-bold sulphur-point-bold">
+                1
               </div>
-            ))}
+              <h4 className="font-semibold text-slate-900 sulphur-point-bold">
+                AI Analyzes Your Profile
+              </h4>
+              <p className="text-sm text-slate-600 sulphur-point-regular">
+                Based on your AI notes and progress, the system identifies your strengths and areas to improve
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div className="w-10 h-10 bg-[#aa08f3] text-white rounded-lg flex items-center justify-center font-bold sulphur-point-bold">
+                2
+              </div>
+              <h4 className="font-semibold text-slate-900 sulphur-point-bold">
+                Selects Perfect Questions
+              </h4>
+              <p className="text-sm text-slate-600 sulphur-point-regular">
+                From 60+ past paper questions, AI picks 2-3 that best match your learning needs
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div className="w-10 h-10 bg-[#aa08f3] text-white rounded-lg flex items-center justify-center font-bold sulphur-point-bold">
+                3
+              </div>
+              <h4 className="font-semibold text-slate-900 sulphur-point-bold">
+                Guides Your Practice
+              </h4>
+              <p className="text-sm text-slate-600 sulphur-point-regular">
+                Step-by-step guidance, model examples, and personalized tips help you improve
+              </p>
+            </div>
           </div>
         </div>
       </div>

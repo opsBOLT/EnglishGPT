@@ -1,0 +1,1179 @@
+{
+  "database_info": {
+    "title": "IGCSE First Language English Paper 2 Consolidated Database",
+    "subject": "First Language English",
+    "paper": "Paper 2 - Directed Writing and Composition",
+    "code": "0500",
+    "date_range": "May/June 2022 to October/November 2023",
+    "total_exam_sessions": 11,
+    "extraction_date": "2025-11-24"
+  },
+  "exam_sessions": [
+    {
+      "exam_info": {
+        "subject": "First Language English",
+        "code": "0500/21",
+        "full_code": "0500_mj24_21",
+        "paper": "Paper 2 Directed Writing and Composition",
+        "series": "May/June 2024",
+        "duration": "2 hours",
+        "total_marks": 80
+      },
+      "questions": [
+        {
+          "question_number": "1",
+          "text": "Write an article for young people about food waste and what they can do about it.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content": 15,
+            "quality_of_writing": 25
+          },
+          "question_type": "directed_writing",
+          "word_limit_guidance": "Write about 250 to 350 words",
+          "instructions": [
+            "Base your article on what you have read in both texts, but be careful to use your own words",
+            "Address both of the bullet points"
+          ],
+          "bullet_points": [
+            "evaluate the ideas, attitudes and opinions given in both texts",
+            "suggest how young people can help to reduce food waste in their homes, schools and the wider world"
+          ]
+        },
+        {
+          "question_number": "2",
+          "text": "Describe a group of people gathering in a local public place.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "descriptive_writing",
+          "word_limit_guidance": "Write about 350 to 450 words"
+        },
+        {
+          "question_number": "3",
+          "text": "Describe the sun rising over a special place.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "descriptive_writing",
+          "word_limit_guidance": "Write about 350 to 450 words"
+        },
+        {
+          "question_number": "4",
+          "text": "Write a story which involves a misunderstanding.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "narrative_writing",
+          "word_limit_guidance": "Write about 350 to 450 words"
+        },
+        {
+          "question_number": "5",
+          "text": "Write a story with the title, 'The transformation'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "narrative_writing",
+          "word_limit_guidance": "Write about 350 to 450 words"
+        }
+      ]
+    },
+    {
+      "exam_info": {
+        "subject": "First Language English",
+        "code": "0500/23",
+        "full_code": "0500_on23_23",
+        "paper": "Paper 2 Directed Writing and Composition",
+        "series": "October/November 2023",
+        "duration": "2 hours",
+        "total_marks": 80
+      },
+      "questions": [
+        {
+          "question_number": "1",
+          "text": "Write a letter to your friend offering your advice.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content": 15,
+            "quality_of_writing": 25
+          },
+          "word_limit_guidance": "Write about 250 to 350 words",
+          "question_type": "directed_writing",
+          "context": "Imagine that your friend has an ambitious plan for their future and has asked for your views.",
+          "instructions": [
+            "Base your letter on what you have read in both texts, but be careful to use your own words",
+            "Address both of the bullet points"
+          ],
+          "bullet_points": [
+            "evaluate the ideas, attitudes and opinions about ambition given in both texts",
+            "based on what you have read, discuss the factors your friend needs to consider to decide if they should follow their ambition"
+          ],
+          "section": "Section A"
+        },
+        {
+          "question_number": "2",
+          "text": "Describe the people waiting for an important visitor to arrive.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "question_type": "descriptive_writing",
+          "section": "Section B"
+        },
+        {
+          "question_number": "3",
+          "text": "Describe the contents of a drawer or cupboard.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "question_type": "descriptive_writing",
+          "section": "Section B"
+        },
+        {
+          "question_number": "4",
+          "text": "Write a story about a time when you were in charge.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "question_type": "narrative_writing",
+          "section": "Section B"
+        },
+        {
+          "question_number": "5",
+          "text": "Write a story with the title, 'Out of reach'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "question_type": "narrative_writing",
+          "title": "Out of reach",
+          "section": "Section B"
+        }
+      ]
+    },
+    {
+      "exam_info": {
+        "subject": "First Language English",
+        "code": "0500/22",
+        "full_code": "0500_on23_22",
+        "paper": "Paper 2 Directed Writing and Composition",
+        "series": "October/November 2023",
+        "duration": "2 hours",
+        "total_marks": 80
+      },
+      "questions": [
+        {
+          "question_number": "1",
+          "text": "Write a letter to persuade your boss that staff should be allowed to listen to podcasts in their workplace.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content": 15,
+            "quality_of_writing": 25
+          },
+          "word_limit_guidance": "Write about 250 to 350 words",
+          "question_type": "directed_writing",
+          "context": "Imagine you are an employee of a business in which listening to podcasts is not allowed.",
+          "instructions": [
+            "Base your letter on what you have read in both texts, but be careful to use your own words",
+            "Address all of the bullet points"
+          ],
+          "bullet_points": [
+            "evaluate the ideas, attitudes and opinions about podcasts given in both texts",
+            "consider the concerns your boss might have",
+            "suggest some of the benefits of staff listening to podcasts, based on what you have read, for both the staff and the business"
+          ],
+          "section": "Section A"
+        },
+        {
+          "question_number": "2",
+          "text": "Describe an object that has been broken for a long time.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "question_type": "descriptive_writing",
+          "section": "Section B"
+        },
+        {
+          "question_number": "3",
+          "text": "Write a description with the title 'A special building – inside and outside'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "question_type": "descriptive_writing",
+          "section": "Section B"
+        },
+        {
+          "question_number": "4",
+          "text": "Write a story that includes the words '… I realised I had been here before …'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "question_type": "narrative_writing",
+          "required_phrase": "… I realised I had been here before …",
+          "section": "Section B"
+        },
+        {
+          "question_number": "5",
+          "text": "Write a story with the title 'The ball'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "question_type": "narrative_writing",
+          "title": "The ball",
+          "section": "Section B"
+        }
+      ]
+    },
+    {
+      "exam_info": {
+        "subject": "First Language English",
+        "code": "0500/21",
+        "full_code": "0500_on23_21",
+        "paper": "Paper 2 Directed Writing and Composition",
+        "series": "October/November 2023",
+        "duration": "2 hours",
+        "total_marks": 80,
+        "sections": 2
+      },
+      "questions": [
+        {
+          "section": "A",
+          "question_number": "1",
+          "text": "Imagine that you are a student of a school which is considering whether or not to demolish an old building on its site. Write the speech you give to a meeting of local people, expressing your views.",
+          "question_type": "directed_writing_speech",
+          "marks": 40,
+          "marks_breakdown": {
+            "content": 15,
+            "quality_of_writing": 25
+          },
+          "word_limit_guidance": "Write about 250 to 350 words",
+          "instructions": [
+            "Imagine that you are a student of a school which is considering whether or not to demolish an old building on its site",
+            "Write the speech you give to a meeting of local people, expressing your views",
+            "Base your speech on what you have read in both texts, but be careful to use your own words",
+            "Address both of the bullet points"
+          ],
+          "bullet_points": [
+            "evaluate the ideas, attitudes and opinions about buildings given in both texts",
+            "based on what you have read, justify your views on whether the school's old building should be replaced or reused"
+          ],
+          "texts_required": [
+            "Text A (from insert)",
+            "Text B (from insert)"
+          ]
+        },
+        {
+          "section": "B",
+          "question_number": "2",
+          "text": "Describe a theme park or attraction when it is open and when it is closed.",
+          "question_type": "descriptive_writing",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words on one of the following questions",
+            "Answer on this question paper"
+          ]
+        },
+        {
+          "section": "B",
+          "question_number": "3",
+          "text": "Describe a group of people meeting to rehearse or practise.",
+          "question_type": "descriptive_writing",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words on one of the following questions",
+            "Answer on this question paper"
+          ]
+        },
+        {
+          "section": "B",
+          "question_number": "4",
+          "text": "Write a story that includes the words, '… I realised it was my responsibility …'.",
+          "question_type": "narrative_writing",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "key_phrase": "… I realised it was my responsibility …",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words on one of the following questions",
+            "Answer on this question paper"
+          ]
+        },
+        {
+          "section": "B",
+          "question_number": "5",
+          "text": "Write a story with the title, 'The portrait'.",
+          "question_type": "narrative_writing",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "title": "The portrait",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words on one of the following questions",
+            "Answer on this question paper"
+          ]
+        }
+      ]
+    },
+    {
+      "exam_info": {
+        "subject": "First Language English",
+        "code": "0500/23",
+        "full_code": "0500_mj23_23",
+        "paper": "Paper 2 Directed Writing and Composition",
+        "series": "May/June 2023",
+        "duration": "2 hours",
+        "total_marks": 80
+      },
+      "questions": [
+        {
+          "question_number": "1",
+          "section": "Section A",
+          "text": "A young child in your family has been selected to join an intensive training programme for their chosen sport and is eager to join. The child's parents have asked for your views about whether or not their child should join. Write a letter to the child's parents. In your letter you should: evaluate the views, attitudes and ideas given in both texts; discuss the factors the parents should consider before deciding; based on what you have read, give your views on whether or not the child and their family will benefit from the programme. Base your letter on what you have read in both texts, but be careful to use your own words. Address both of the bullet points.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content": 15,
+            "quality_of_writing": 25
+          },
+          "question_type": "directed_writing",
+          "word_limit_guidance": "Write about 250 to 350 words",
+          "bullet_points": [
+            "evaluate the views, attitudes and ideas given in both texts",
+            "discuss the factors the parents should consider before deciding",
+            "based on what you have read, give your views on whether or not the child and their family will benefit from the programme"
+          ],
+          "instructions": [
+            "Base your letter on what you have read in both texts, but be careful to use your own words",
+            "Address both of the bullet points"
+          ],
+          "text_reference": "Text A and Text B in the insert"
+        },
+        {
+          "question_number": "2",
+          "section": "Section B",
+          "text": "Describe a set of new clothes.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "descriptive_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ]
+        },
+        {
+          "question_number": "3",
+          "section": "Section B",
+          "text": "Describe the people in a park at different times of the year.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "descriptive_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ]
+        },
+        {
+          "question_number": "4",
+          "section": "Section B",
+          "text": "Write a story that involves a meeting.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "narrative_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ]
+        },
+        {
+          "question_number": "5",
+          "section": "Section B",
+          "text": "Write a story that includes the words, '… Was this the key? …'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "narrative_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "required_phrase": "… Was this the key? …",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ]
+        }
+      ]
+    },
+    {
+      "exam_info": {
+        "subject": "First Language English",
+        "code": "0500/22",
+        "full_code": "0500_mj23_22",
+        "paper": "Paper 2 Directed Writing and Composition",
+        "series": "May/June 2023",
+        "duration": "2 hours",
+        "total_marks": 80
+      },
+      "questions": [
+        {
+          "question_number": "1",
+          "section": "Section A: Directed Writing",
+          "text": "Your friend has been asked by their boss at work to apologise to a colleague for missing a meeting. Your friend is unsure whether to apologise and how to apologise so that their boss is satisfied. Write a letter to your friend, giving advice on what they should do.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content": 15,
+            "quality_of_writing": 25
+          },
+          "question_type": "directed_writing",
+          "word_limit_guidance": "Write about 250 to 350 words",
+          "text_references": [
+            "Text A - in the insert",
+            "Text B - in the insert"
+          ],
+          "bullet_points": [
+            "Evaluate the ideas about apologising given in both texts",
+            "Explain why your friend should or should not apologise, and how to deal with the situation at work"
+          ],
+          "instructions": [
+            "Your friend has been asked by their boss at work to apologise to a colleague for missing a meeting",
+            "Your friend is unsure whether to apologise and how to apologise so that their boss is satisfied",
+            "Write a letter to your friend, giving advice on what they should do",
+            "In your letter you should evaluate the ideas about apologising given in both texts",
+            "In your letter you should explain why your friend should or should not apologise, and how to deal with the situation at work",
+            "Base your letter on what you have read in both texts, but be careful to use your own words",
+            "Address both of the bullet points",
+            "Write about 250 to 350 words",
+            "Up to 15 marks are available for the content of your answer",
+            "Up to 25 marks are available for the quality of your writing"
+          ]
+        },
+        {
+          "question_number": "2",
+          "section": "Section B: Composition",
+          "text": "Describe a room before and after being decorated or renovated.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "descriptive_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ]
+        },
+        {
+          "question_number": "3",
+          "section": "Section B: Composition",
+          "text": "Write a description with the title, 'The performer'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "descriptive_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "title": "The performer",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ]
+        },
+        {
+          "question_number": "4",
+          "section": "Section B: Composition",
+          "text": "Write a story which includes the words, '… I set off as usual that day …'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "narrative_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "required_phrase": "… I set off as usual that day …",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ]
+        },
+        {
+          "question_number": "5",
+          "section": "Section B: Composition",
+          "text": "Write a story with the title, 'Out of time'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "narrative_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "title": "Out of time",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ]
+        }
+      ]
+    },
+    {
+      "exam_info": {
+        "subject": "First Language English",
+        "code": "0500/21",
+        "full_code": "0500_mj23_21",
+        "paper": "Paper 2 Directed Writing and Composition",
+        "series": "May/June 2023",
+        "duration": "2 hours",
+        "total_marks": 80
+      },
+      "questions": [
+        {
+          "question_number": "1",
+          "section": "Section A: Directed Writing",
+          "text": "Write an article for young people, advising them what they need to consider when deciding on a holiday destination.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content": 15,
+            "quality_of_writing": 25
+          },
+          "question_type": "directed_writing",
+          "word_limit_guidance": "Write about 250 to 350 words",
+          "text_references": [
+            "Text A - in the insert",
+            "Text B - in the insert"
+          ],
+          "bullet_points": [
+            "Evaluate the ideas, opinions and attitudes in both texts",
+            "Suggest what young people should consider in order to make a responsible decision"
+          ],
+          "instructions": [
+            "Write an article for young people, advising them what they need to consider when deciding on a holiday destination",
+            "In your article you should evaluate the ideas, opinions and attitudes in both texts",
+            "In your article you should suggest what young people should consider in order to make a responsible decision",
+            "Base your article on what you have read in both texts, but be careful to use your own words",
+            "Address both of the bullet points",
+            "Write about 250 to 350 words",
+            "Up to 15 marks are available for the content of your answer",
+            "Up to 25 marks are available for the quality of your writing"
+          ]
+        },
+        {
+          "question_number": "2",
+          "section": "Section B: Composition",
+          "text": "Describe a shop you remember visiting in the past.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "descriptive_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ]
+        },
+        {
+          "question_number": "3",
+          "section": "Section B: Composition",
+          "text": "Describe the experience of seeing an animal.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "descriptive_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ]
+        },
+        {
+          "question_number": "4",
+          "section": "Section B: Composition",
+          "text": "Write a story which includes the words, '… I was convinced I was right …'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "narrative_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "required_phrase": "… I was convinced I was right …",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ]
+        },
+        {
+          "question_number": "5",
+          "section": "Section B: Composition",
+          "text": "Write a story with the title, 'The silk ribbon'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "narrative_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "title": "The silk ribbon",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ]
+        }
+      ]
+    },
+    {
+      "exam_info": {
+        "subject": "First Language English",
+        "code": "0500/22",
+        "full_code": "0500_m23_22",
+        "paper": "Paper 2 Directed Writing and Composition",
+        "series": "February/March 2023",
+        "duration": "2 hours",
+        "total_marks": 80
+      },
+      "questions": [
+        {
+          "question_number": "1",
+          "text": "Write a speech for your year group explaining whether or not you think young people should change their attitudes to fashion.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content": 15,
+            "quality_of_writing": 25
+          },
+          "word_limit_guidance": "Write about 250 to 350 words",
+          "question_type": "directed_writing",
+          "instructions": [
+            "Base your speech on what you have read in both texts, but be careful to use your own words",
+            "Address both of the bullet points"
+          ],
+          "bullet_points": [
+            "evaluate the attitudes and ideas in both texts",
+            "give your views, based on what you have read, on the effects a change in attitudes to fashion might have on young people, the fashion business and the environment"
+          ],
+          "section": "Section A"
+        },
+        {
+          "question_number": "2",
+          "text": "Write a description of an untidy room.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "question_type": "descriptive_writing",
+          "section": "Section B"
+        },
+        {
+          "question_number": "3",
+          "text": "Write a description with the title, 'A sunny day in a town or city'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "question_type": "descriptive_writing",
+          "title": "A sunny day in a town or city",
+          "section": "Section B"
+        },
+        {
+          "question_number": "4",
+          "text": "Write a story which includes the words, '… I had a feeling I might be wrong …'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "question_type": "narrative_writing",
+          "required_phrase": "… I had a feeling I might be wrong …",
+          "section": "Section B"
+        },
+        {
+          "question_number": "5",
+          "text": "Write a story with the title, 'The watch'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "question_type": "narrative_writing",
+          "title": "The watch",
+          "section": "Section B"
+        }
+      ]
+    },
+    {
+      "exam_info": {
+        "subject": "First Language English",
+        "code": "0500/23",
+        "full_code": "0500_mj22_23",
+        "paper": "Paper 2 Directed Writing and Composition",
+        "series": "May/June 2022",
+        "duration": "2 hours",
+        "total_marks": 80
+      },
+      "structure": {
+        "section_a": "Directed Writing - answer Question 1",
+        "section_b": "Composition - answer one question from four options"
+      },
+      "questions": [
+        {
+          "section": "A",
+          "question_number": "1",
+          "question_type": "directed_writing",
+          "text": "The headteacher of your child's school is considering setting up a repair café run by volunteers in the school; the headteacher has asked for opinions from parents. Write a letter to the headteacher giving your views as a parent.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content": 15,
+            "quality_of_writing": 25
+          },
+          "instructions": [
+            "Evaluate the ideas, attitudes and opinions given in the two texts",
+            "Give your views about whether or not a repair café is a good idea for students, staff and the wider community",
+            "Base your letter on what you have read in both texts, but be careful to use your own words",
+            "Address both bullet points"
+          ],
+          "word_limit_guidance": "Write about 250 to 350 words",
+          "text_references": [
+            "Text A",
+            "Text B"
+          ],
+          "format": "letter"
+        },
+        {
+          "section": "B",
+          "question_number": "2",
+          "question_type": "descriptive_writing",
+          "text": "Describe a group of people meeting for the first time after a long separation.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words"
+        },
+        {
+          "section": "B",
+          "question_number": "3",
+          "question_type": "descriptive_writing",
+          "text": "Describe a city street in very bad weather.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words"
+        },
+        {
+          "section": "B",
+          "question_number": "4",
+          "question_type": "narrative_writing",
+          "text": "Write a story with the title, 'The prize'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words"
+        },
+        {
+          "section": "B",
+          "question_number": "5",
+          "question_type": "narrative_writing",
+          "text": "Write a story which involves having to correct a mistake.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words"
+        }
+      ]
+    },
+    {
+      "exam_info": {
+        "subject": "First Language English",
+        "code": "0500/22",
+        "full_code": "0500_mj22_22",
+        "paper": "Paper 2 Directed Writing and Composition",
+        "series": "May/June 2022",
+        "duration": "2 hours",
+        "total_marks": 80
+      },
+      "structure": {
+        "section_a": "Directed Writing - answer Question 1",
+        "section_b": "Composition - answer one question from four options"
+      },
+      "questions": [
+        {
+          "section": "A",
+          "question_number": "1",
+          "question_type": "directed_writing",
+          "text": "Write an article for young people about outdoor learning.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content": 15,
+            "quality_of_writing": 25
+          },
+          "instructions": [
+            "Evaluate the ideas, opinions and attitudes given in both texts",
+            "Give your own views about whether or not an outdoor education for children and young people is feasible or desirable",
+            "Base your article on what you have read in both texts, but be careful to use your own words",
+            "Address both bullet points"
+          ],
+          "word_limit_guidance": "Write about 250 to 350 words",
+          "text_references": [
+            "Text A",
+            "Text B"
+          ],
+          "format": "article"
+        },
+        {
+          "section": "B",
+          "question_number": "2",
+          "question_type": "descriptive_writing",
+          "text": "Describe an outdoor event which is ruined by bad weather.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words"
+        },
+        {
+          "section": "B",
+          "question_number": "3",
+          "question_type": "descriptive_writing",
+          "text": "Describe a group of people who are on holiday.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words"
+        },
+        {
+          "section": "B",
+          "question_number": "4",
+          "question_type": "narrative_writing",
+          "text": "Write a story with the title, 'The lake'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words"
+        },
+        {
+          "section": "B",
+          "question_number": "5",
+          "question_type": "narrative_writing",
+          "text": "Write a story that involves looking after a child.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words"
+        }
+      ]
+    },
+    {
+      "exam_info": {
+        "subject": "First Language English",
+        "code": "0500/21",
+        "full_code": "0500_mj22_21",
+        "paper": "Paper 2 Directed Writing and Composition",
+        "series": "May/June 2022",
+        "duration": "2 hours",
+        "total_marks": 80
+      },
+      "structure": {
+        "section_a": "Directed Writing - answer Question 1",
+        "section_b": "Composition - answer one question from four options"
+      },
+      "questions": [
+        {
+          "section": "A",
+          "question_number": "1",
+          "question_type": "directed_writing",
+          "text": "A relative is considering moving to another country where they and their teenage children will have to learn a new language. Write a letter to your relative giving your views about whether or not this is a good idea.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content": 15,
+            "quality_of_writing": 25
+          },
+          "instructions": [
+            "Evaluate the ideas, opinions and attitudes in both texts",
+            "Explain how successful you think the move will be for the adults and their children",
+            "Base your letter on what you have read in both texts, but be careful to use your own words",
+            "Address both bullet points"
+          ],
+          "word_limit_guidance": "Write about 250 to 350 words",
+          "text_references": [
+            "Text A",
+            "Text B"
+          ],
+          "format": "letter"
+        },
+        {
+          "section": "B",
+          "question_number": "2",
+          "question_type": "descriptive_writing",
+          "text": "Write a description with the title, 'The nest'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words"
+        },
+        {
+          "section": "B",
+          "question_number": "3",
+          "question_type": "descriptive_writing",
+          "text": "Describe the preparations you make for an important journey.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words"
+        },
+        {
+          "section": "B",
+          "question_number": "4",
+          "question_type": "narrative_writing",
+          "text": "Write a story which involves an injustice.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words"
+        },
+        {
+          "section": "B",
+          "question_number": "5",
+          "question_type": "narrative_writing",
+          "text": "Write a story with the title, 'Cancelled'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "word_limit_guidance": "Write about 350 to 450 words"
+        }
+      ]
+    },
+    {
+      "exam_info": {
+        "subject": "First Language English",
+        "full_code": "0500_m22_22",
+        "paper_number": "Paper 2",
+        "paper_title": "Directed Writing and Composition",
+        "series": "February/March 2022",
+        "duration": "2 hours",
+        "total_marks": 80,
+        "marks_breakdown": {
+          "section_a": 40,
+          "section_b": 40
+        }
+      },
+      "questions": [
+        {
+          "question_number": "1",
+          "section": "Section A: Directed Writing",
+          "text": "The headteacher of your school or college is considering whether or not to allow learners to use fidget gadgets in lessons. Write a letter to the headteacher giving your views.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content": 15,
+            "quality_of_writing": 25
+          },
+          "question_type": "directed_writing",
+          "word_limit_guidance": "Write about 250 to 350 words",
+          "instructions": [
+            "Evaluate the ideas, opinions and attitudes in both texts",
+            "Give your own views about the possible effects on learners and teachers of allowing fidget gadgets to be used in lessons",
+            "Base your letter on what you have read in both texts, but be careful to use your own words",
+            "Address both of the bullet points"
+          ],
+          "reading_requirement": "Requires reading Text A and Text B from the insert",
+          "text_type": "letter",
+          "assessment_criteria": {
+            "content": "Up to 15 marks for evaluation of texts and own views",
+            "writing_quality": "Up to 25 marks for quality of writing"
+          }
+        },
+        {
+          "question_number": "2",
+          "section": "Section B: Composition",
+          "text": "Describe a street which has changed over time.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "descriptive_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ],
+          "writing_focus": "Descriptive writing about change over time"
+        },
+        {
+          "question_number": "3",
+          "section": "Section B: Composition",
+          "text": "Write a description of a group of people who have become stuck somewhere.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "descriptive_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ],
+          "writing_focus": "Descriptive writing about people in an unusual situation"
+        },
+        {
+          "question_number": "4",
+          "section": "Section B: Composition",
+          "text": "Write a story with the title, 'The dark mountain'.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "narrative_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "title": "The dark mountain",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ],
+          "writing_focus": "Narrative writing with prescribed title"
+        },
+        {
+          "question_number": "5",
+          "section": "Section B: Composition",
+          "text": "Write a story that involves a plan that goes wrong.",
+          "marks": 40,
+          "marks_breakdown": {
+            "content_and_structure": 16,
+            "style_and_accuracy": 24
+          },
+          "question_type": "narrative_writing",
+          "word_limit_guidance": "Write about 350 to 450 words",
+          "prompt_element": "A plan that goes wrong",
+          "instructions": [
+            "Answer one question from Section B",
+            "Write about 350 to 450 words",
+            "Up to 16 marks are available for the content and structure of your answer",
+            "Up to 24 marks are available for the style and accuracy of your writing"
+          ],
+          "writing_focus": "Narrative writing with thematic constraint"
+        }
+      ]
+    }
+  ]
+}

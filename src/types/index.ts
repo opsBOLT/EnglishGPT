@@ -9,11 +9,8 @@ export interface User {
 export interface OnboardingResponse {
   id: string;
   user_id: string;
-  reading_skill: 'A' | 'B' | 'C' | 'D';
-  writing_skill: 'A' | 'B' | 'C' | 'D';
-  analysis_skill: 'A' | 'B' | 'C' | 'D';
+  voice_intro_complete: boolean;
   exam_struggles: string[];
-  difficulty_explanation: string;
   created_at: string;
 }
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Calendar, Clock, Play } from 'lucide-react';
 import { Card, Flex, Text } from '@tremor/react';
 import { formatTime, formatDuration, getTimeAgo } from '../../../utils/date';

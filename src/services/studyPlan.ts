@@ -1,13 +1,50 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabase } from '../lib/supabase';
+import { getAINotes, getTaskCompletions } from './api';
+import { aiLogger } from './aiLogger';
 
 type PlanPayload = {
   summary: string;
+  aiNotes?: Record<string, any>;  // Full AI notes object from student_ai_notes
   markingResult?: unknown;
   essay?: string;
   questionType?: string;
+  previousPlanId?: string;
+  previousPlanVersion?: number;
+  progressData?: {
+    completedCount: number;
+    totalCount: number;
+    improvingAreas?: string[];
+    strugglingAreas?: string[];
+  };
+};
+
+export type Task = {
+  id: string;  // Unique task ID for tracking (e.g., "monday-0-uuid")
+  title: string;
+  description: string;
+  category: 'paper1' | 'paper2' | 'examples' | 'text_types' | 'vocabulary' | 'general';
+  duration_minutes: number;
+  time_slot?: string;  // Optional scheduling hint (e.g., "morning", "afternoon")
+  status: 'pending' | 'in_progress' | 'completed';
+  completed_at?: string;  // Timestamp when marked complete
+  ai_note_references?: string[];  // Which AI notes informed this task
+};
+
+export type TaskCompletionRecord = {
+  task_id: string;
+  week_number?: number;
+  day?: string;
+  time_spent_minutes?: number | null;
+  difficulty_rating?: number | null;
 };
 
 export type NormalizedStudyPlan = {
+  plan_id?: string;  // Unique plan ID for tracking completions
+  generated_at?: string;  // When the plan was generated
+  version?: number;  // For adaptive regeneration tracking
+
+  // Overview sections
   overview: string;
   targets: {
     target_grade: string;
@@ -18,7 +55,26 @@ export type NormalizedStudyPlan = {
   strengths: string[];
   weaknesses: string[];
   priorities: string[];
-  weekly_plan: Array<{
+
+  // Enhanced weekly structure (UI-ready with nested daily tasks)
+  weeks?: Array<{
+    week_number: number;
+    theme: string;
+    start_date?: string;  // Calculated from plan start (ISO string)
+    goals: string[];
+    focus_papers: string[];
+    checkpoints: string[];
+
+    // Transformed daily tasks (nested structure for UI)
+    daily_tasks: Array<{
+      day: string;  // "monday", "tuesday", ...
+      date?: string;  // Actual calendar date (ISO string)
+      tasks: Task[];
+    }>;
+  }>;
+
+  // Legacy structure (for backward compatibility with existing plans)
+  weekly_plan?: Array<{
     week_number: number;
     theme: string;
     goals: string[];
@@ -28,7 +84,9 @@ export type NormalizedStudyPlan = {
     drills: string[];
     checkpoints: string[];
   }>;
-  daily_micro_tasks: Record<string, string[]>;
+  daily_micro_tasks?: Record<string, string[]>;
+
+  // Supporting materials
   exam_drills: string[];
   feedback_loops: string[];
   resources: string[];
@@ -36,15 +94,251 @@ export type NormalizedStudyPlan = {
 };
 
 /**
- * Create a very detailed study plan using the summary + marking results.
+ * Build contextualized AI notes sections for prompt injection.
+ * Groups the 36 AI note fields into digestible categories.
+ */
+function buildAINotesContext(notes: Record<string, any>): {
+  paperSkills: string;
+  textTypeSkills: string;
+  coreSkills: string;
+  learningPatterns: string;
+} {
+  const formatNote = (key: string, label: string): string => {
+    const value = notes[key];
+    if (!value || value === 'NO DATA' || value === 'null' || value === null) return '';
+    return `${label}: ${value}`;
+  };
+
+  // Paper 1 & 2 Skills
+  const paper1Notes = [
+    formatNote('paper1_reading_comprehension_ai_note', 'Reading Comprehension'),
+    formatNote('paper1_summary_ai_note', 'Summary Writing'),
+    formatNote('paper1_language_analysis_ai_note', 'Language Analysis (Q2d)'),
+    formatNote('paper1_extended_writing_ai_note', 'Extended Writing (Q3)'),
+  ].filter(Boolean).join('\n');
+
+  const paper2Notes = [
+    formatNote('paper2_directed_writing_ai_note', 'Directed Writing'),
+    formatNote('paper2_composition_narrative_ai_note', 'Narrative Composition'),
+    formatNote('paper2_composition_descriptive_ai_note', 'Descriptive Composition'),
+  ].filter(Boolean).join('\n');
+
+  const paperSkills = [paper1Notes, paper2Notes].filter(Boolean).join('\n\n');
+
+  // Text Type Proficiency
+  const textTypeNotes = [
+    formatNote('text_type_interview_ai_note', 'Interview'),
+    formatNote('text_type_diary_ai_note', 'Journal/Diary'),
+    formatNote('text_type_magazine_article_ai_note', 'Magazine Article'),
+    formatNote('text_type_newspaper_report_ai_note', 'Newspaper Report'),
+    formatNote('text_type_formal_report_ai_note', 'Formal Report'),
+    formatNote('text_type_speech_ai_note', 'Speech'),
+    formatNote('text_type_letter_formal_ai_note', 'Formal Letter'),
+    formatNote('text_type_letter_informal_ai_note', 'Informal Letter'),
+  ].filter(Boolean).join('\n');
+
+  // Core Writing Skills
+  const coreSkillNotes = [
+    formatNote('skill_vorpf_ai_note', 'VORPF Application (Voice/Audience/Register/Purpose/Format)'),
+    formatNote('skill_vocabulary_ai_note', 'Vocabulary Range'),
+    formatNote('skill_sentence_variety_ai_note', 'Sentence Variety'),
+    formatNote('skill_punctuation_ai_note', 'Punctuation'),
+    formatNote('skill_paragraph_structure_ai_note', 'Paragraph Structure'),
+    formatNote('skill_development_ai_note', 'Idea Development'),
+    formatNote('skill_inference_ai_note', 'Inference Skills'),
+    formatNote('skill_paraphrasing_ai_note', 'Paraphrasing'),
+    formatNote('skill_evaluation_ai_note', 'Critical Evaluation'),
+  ].filter(Boolean).join('\n');
+
+  // Learning Patterns & Motivation
+  const learningNotes = [
+    formatNote('learning_style_ai_note', 'Learning Style'),
+    formatNote('motivation_pattern_ai_note', 'Motivation Triggers'),
+    formatNote('time_management_ai_note', 'Time Management'),
+    formatNote('confidence_level_ai_note', 'Confidence Level'),
+    formatNote('specific_struggles_ai_note', 'Known Struggles'),
+    formatNote('breakthrough_moments_ai_note', 'Previous Breakthroughs'),
+  ].filter(Boolean).join('\n');
+
+  return {
+    paperSkills: paperSkills || 'No specific paper skill notes available.',
+    textTypeSkills: textTypeNotes || 'No text type proficiency notes available.',
+    coreSkills: coreSkillNotes || 'No core skill notes available.',
+    learningPatterns: learningNotes || 'No learning pattern notes available.',
+  };
+}
+
+/**
+ * Generate a unique ID for a task
+ */
+function generateTaskId(day: string, index: number): string {
+  // Create a simple unique ID: day-index-timestamp
+  return `${day}-${index}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+}
+
+/**
+ * Calculate the date for a specific day in a specific week
+ */
+function getDateForDayInWeek(startDate: Date, weekIndex: number, dayName: string): string {
+  const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const dayIndex = daysOfWeek.indexOf(dayName.toLowerCase());
+  if (dayIndex === -1) return startDate.toISOString();
+
+  const date = new Date(startDate);
+  date.setDate(date.getDate() + (weekIndex * 7) + dayIndex);
+  return date.toISOString();
+}
+
+/**
+ * Add weeks to a date
+ */
+function addWeeks(date: Date, weeks: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + (weeks * 7));
+  return result;
+}
+
+/**
+ * Parse a task string into a structured Task object
+ * Extracts category and duration from the task description
+ */
+function parseTaskString(taskStr: string, day: string, index: number, aiNotes?: Record<string, any>): Task {
+  // Try to extract duration from patterns like "15 min", "20-min", "30 minutes"
+  const durationMatch = taskStr.match(/(\d+)[\s-]*(min|minute|minutes)/i);
+  const duration = durationMatch ? parseInt(durationMatch[1]) : 20; // default 20 min
+
+  // Determine category based on keywords
+  let category: Task['category'] = 'general';
+  const lowerTask = taskStr.toLowerCase();
+  if (lowerTask.includes('paper 1') || lowerTask.includes('paper1') || lowerTask.includes('reading') || lowerTask.includes('comprehension') || lowerTask.includes('summary') || lowerTask.includes('language analysis')) {
+    category = 'paper1';
+  } else if (lowerTask.includes('paper 2') || lowerTask.includes('paper2') || lowerTask.includes('directed writing') || lowerTask.includes('composition') || lowerTask.includes('narrative') || lowerTask.includes('descriptive')) {
+    category = 'paper2';
+  } else if (lowerTask.includes('text type') || lowerTask.includes('letter') || lowerTask.includes('article') || lowerTask.includes('speech') || lowerTask.includes('report') || lowerTask.includes('diary') || lowerTask.includes('interview')) {
+    category = 'text_types';
+  } else if (lowerTask.includes('vocabulary') || lowerTask.includes('word') || lowerTask.includes('vocab')) {
+    category = 'vocabulary';
+  } else if (lowerTask.includes('example') || lowerTask.includes('model') || lowerTask.includes('sample')) {
+    category = 'examples';
+  }
+
+  // Extract title (first 50 chars or until punctuation)
+  const title = taskStr.split(/[.!?]/)[0].slice(0, 60).trim() || taskStr.slice(0, 60).trim();
+
+  // Find relevant AI notes that might have informed this task
+  const aiNoteRefs: string[] = [];
+  if (aiNotes) {
+    // Look for AI note fields that might relate to this task's category
+    const relevantFields = Object.keys(aiNotes).filter(key => {
+      const value = aiNotes[key];
+      if (!value || value === 'NO DATA') return false;
+
+      // Check if task content relates to this AI note field
+      if (category === 'paper1' && key.includes('paper1')) return true;
+      if (category === 'paper2' && key.includes('paper2')) return true;
+      if (category === 'text_types' && key.includes('text_type')) return true;
+      if (category === 'vocabulary' && key.includes('vocabulary')) return true;
+
+      return false;
+    });
+    aiNoteRefs.push(...relevantFields);
+  }
+
+  return {
+    id: generateTaskId(day, index),
+    title,
+    description: taskStr,
+    category,
+    duration_minutes: duration,
+    status: 'pending',
+    ai_note_references: aiNoteRefs.length > 0 ? aiNoteRefs : undefined,
+  };
+}
+
+/**
+ * Transform the LLM-generated plan into a UI-ready structure with nested daily tasks
+ */
+function transformToUIStructure(
+  rawPlan: NormalizedStudyPlan,
+  aiNotes?: Record<string, any>
+): NormalizedStudyPlan {
+  const startDate = new Date(); // Plan starts today
+  const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+  // If the plan already has the new structure, return it as-is
+  if (rawPlan.weeks && rawPlan.weeks.length > 0) {
+    return {
+      ...rawPlan,
+      plan_id: rawPlan.plan_id || `plan-${Date.now()}`,
+      generated_at: rawPlan.generated_at || new Date().toISOString(),
+      version: rawPlan.version || 1,
+    };
+  }
+
+  // Transform legacy structure to new structure
+  const weeks = rawPlan.weekly_plan?.map((week, weekIndex) => {
+    // Build daily_tasks from daily_micro_tasks
+    const daily_tasks = daysOfWeek.map(day => {
+      const tasksForDay = rawPlan.daily_micro_tasks?.[day] || [];
+      const tasks = tasksForDay.map((taskStr, taskIndex) =>
+        parseTaskString(taskStr, day, taskIndex, aiNotes)
+      );
+
+      return {
+        day,
+        date: getDateForDayInWeek(startDate, weekIndex, day),
+        tasks,
+      };
+    });
+
+    return {
+      week_number: week.week_number,
+      theme: week.theme,
+      start_date: addWeeks(startDate, weekIndex).toISOString(),
+      goals: week.goals,
+      focus_papers: week.focus_papers,
+      checkpoints: week.checkpoints,
+      daily_tasks,
+    };
+  }) || [];
+
+  return {
+    ...rawPlan,
+    plan_id: `plan-${Date.now()}`,
+    generated_at: new Date().toISOString(),
+    version: 1,
+    weeks,
+    // Keep legacy structure for backward compatibility
+    weekly_plan: rawPlan.weekly_plan,
+    daily_micro_tasks: rawPlan.daily_micro_tasks,
+  };
+}
+
+/**
+ * Create a very detailed study plan using the summary + marking results + AI notes.
  * The prompt is intentionally massive and exhaustive to guide the LLM output.
  */
 export async function createDetailedStudyPlan(userId: string, payload: PlanPayload): Promise<{ plan?: NormalizedStudyPlan; error?: string }> {
+  // Fetch AI notes if not provided
+  let aiNotes = payload.aiNotes;
+  if (!aiNotes) {
+    const { notes, error: notesError } = await getAINotes(userId);
+    if (notesError) {
+      console.warn('[studyPlan] Could not fetch AI notes, generating plan without them:', notesError);
+    } else {
+      aiNotes = notes as Record<string, any>;
+    }
+  }
+
+  // Build AI notes context for prompt
+  const aiNotesContext = aiNotes ? buildAINotesContext(aiNotes) : null;
+
   const prompt = `
 You are an elite IGCSE English tutor. Build a concrete, actionable study plan using:
 1) The onboarding conversation summary (student goals/weaknesses/strengths).
 2) The automated marking result (question type, score, feedback).
 3) The essay text (evidence of style/accuracy).
+4) The comprehensive AI-identified skill profile and learning patterns (36 data points).
 
 NON-NEGOTIABLE OUTPUT FORMAT (JSON ONLY, NO MARKDOWN, NO PROSE OUTSIDE JSON):
 {
@@ -460,17 +754,56 @@ Common Student Struggles and Advice Relevant for Study Plans
 
     PLEASE PLEASE PLEASE USE THIS INFORMATION BELOW OF THE USER AND THEIR ESSAY TO CREATE A VERY PERSONALISED STUDY PLAN. VERY VERY VERY PERSONALISED.
 
-USER SUMMARY (verbatim): ${payload.summary || 'N/A'}
+## STUDENT PERSONALIZATION DATA
+
+### Onboarding Summary
+${payload.summary || 'N/A'}
+
+${aiNotesContext ? `
+### AI-Identified Skill Profile (Use these insights to hyper-personalize tasks and drills)
+
+#### Paper-Specific Skills
+${aiNotesContext.paperSkills}
+
+#### Text Type Proficiency
+${aiNotesContext.textTypeSkills}
+
+#### Core Writing Skills
+${aiNotesContext.coreSkills}
+
+#### Learning Patterns & Motivation
+${aiNotesContext.learningPatterns}
+` : ''}
+
+### Recent Performance (Weakness Essay)
+Essay Type: ${payload.questionType || 'N/A'}
 MARKING RESULT RAW JSON (verbatim): ${JSON.stringify(payload.markingResult || {})}
 USER ESSAY (verbatim): ${payload.essay || 'N/A'}
-WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
+
+${payload.progressData ? `
+### Progress To Date (Adaptive Context)
+Completed Tasks: ${payload.progressData.completedCount}/${payload.progressData.totalCount}
+${payload.progressData.improvingAreas && payload.progressData.improvingAreas.length > 0
+  ? `Areas Showing Improvement: ${payload.progressData.improvingAreas.join(', ')}`
+  : ''}
+${payload.progressData.strugglingAreas && payload.progressData.strugglingAreas.length > 0
+  ? `Still Struggling With: ${payload.progressData.strugglingAreas.join(', ')}`
+  : ''}
+` : ''}
+
+## INSTRUCTIONS FOR PERSONALIZATION
+Use the AI notes above to:
+- Reference specific weaknesses in tasks (e.g., "Focus on VORPF framework - you struggle with audience adaptation")
+- Target drills to exact pain points (e.g., "Daily 10-min drill on punctuation variety - currently overusing commas")
+- Adapt to learning style (e.g., "You learn best with examples first - each drill includes model answer before practice")
+- Embed motivation triggers (e.g., "Track improvement in timed conditions - your breakthrough area")
+- Adjust difficulty based on text type proficiency
 `;
 
   try {
-    const shouldLogPrompt = import.meta.env.DEV || import.meta.env.VITE_DEBUG_STUDY_PLAN_PROMPT === 'true';
-    if (shouldLogPrompt) {
-      console.log('[studyPlan] Full prompt preview:', prompt);
-    }
+    // Log the prompt
+    const startTime = Date.now();
+    const logId = aiLogger.logPrompt('study_plan', 'x-ai/grok-4.1-fast:free', prompt, { userId });
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -491,6 +824,8 @@ WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
 
     if (!response.ok) {
       const text = await response.text();
+      const duration = Date.now() - startTime;
+      aiLogger.logResponse(logId, text, { duration_ms: duration, error: `HTTP ${response.status}` });
       console.error('[studyPlan] LLM error', response.status, text);
       return { error: text || 'LLM request failed' };
     }
@@ -498,8 +833,17 @@ WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content;
     if (!content) {
+      const duration = Date.now() - startTime;
+      aiLogger.logResponse(logId, '', { duration_ms: duration, error: 'Empty LLM response' });
       return { error: 'Empty LLM response' };
     }
+
+    // Log the successful response
+    const duration = Date.now() - startTime;
+    aiLogger.logResponse(logId, content, {
+      duration_ms: duration,
+      tokens: data?.usage?.total_tokens
+    });
 
     let planJson: unknown;
     try {
@@ -511,11 +855,31 @@ WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
 
     const normalized = normalizePlan(planJson);
 
+    // Transform to UI-ready structure with nested daily tasks, unique IDs, and dates
+    const transformed = transformToUIStructure(normalized, aiNotes);
+    const version = payload.previousPlanVersion ? payload.previousPlanVersion + 1 : (transformed.version || 1);
+    const basePlanId = payload.previousPlanId
+      ? payload.previousPlanId.replace(/-v\d+$/, '')
+      : transformed.plan_id || `plan-${Date.now()}`;
+    const planId = payload.previousPlanId
+      ? `${basePlanId}-v${version}`
+      : basePlanId;
+    const finalPlan: NormalizedStudyPlan = {
+      ...transformed,
+      plan_id: planId,
+      version,
+      generated_at: transformed.generated_at || new Date().toISOString(),
+    };
+
+    console.log('[studyPlan] Transformed plan to UI structure with', finalPlan.weeks?.length || 0, 'weeks');
+
     const { error: dbError } = await supabase
       .from('study_plan')
       .upsert({
         user_id: userId,
-        plan_data: normalized,
+        plan_data: finalPlan,
+        is_active: true,
+        updated_at: new Date().toISOString(),
       });
 
     if (dbError) {
@@ -523,9 +887,116 @@ WEAKEST QUESTION TYPE (from user): ${payload.questionType || 'N/A'}
       return { error: dbError.message };
     }
 
-    return { plan: normalized };
+    return { plan: finalPlan };
   } catch (error) {
     console.error('[studyPlan] generation error', error);
+    return { error: (error as Error).message };
+  }
+}
+
+/**
+ * Normalize the raw LLM response into a predictable shape for the UI.
+ */
+const CATEGORY_LABELS: Record<Task['category'], string> = {
+  paper1: 'Paper 1',
+  paper2: 'Paper 2',
+  examples: 'Examples',
+  text_types: 'Text Types',
+  vocabulary: 'Vocabulary',
+  general: 'General Skills',
+};
+
+function buildProgressSignals(
+  plan: NormalizedStudyPlan | null | undefined,
+  completions: TaskCompletionRecord[] = []
+): {
+  completedCount: number;
+  totalCount: number;
+  improvingAreas: string[];
+  strugglingAreas: string[];
+} {
+  const totals: Record<Task['category'], { total: number; completed: number }> = {
+    paper1: { total: 0, completed: 0 },
+    paper2: { total: 0, completed: 0 },
+    examples: { total: 0, completed: 0 },
+    text_types: { total: 0, completed: 0 },
+    vocabulary: { total: 0, completed: 0 },
+    general: { total: 0, completed: 0 },
+  };
+
+  const taskLookup = new Map<string, Task>();
+
+  plan?.weeks?.forEach(week => {
+    week.daily_tasks?.forEach(day => {
+      day.tasks?.forEach(task => {
+        totals[task.category].total += 1;
+        taskLookup.set(task.id, task);
+      });
+    });
+  });
+
+  completions?.forEach(completion => {
+    const task = taskLookup.get(completion.task_id);
+    if (task) {
+      totals[task.category].completed += 1;
+    }
+  });
+
+  const improvingAreas = Object.entries(totals)
+    .filter(([, stats]) => stats.total > 0 && stats.completed / stats.total >= 0.65)
+    .map(([key]) => CATEGORY_LABELS[key as Task['category']] || key);
+
+  const strugglingAreas = Object.entries(totals)
+    .filter(([, stats]) => stats.total > 0 && stats.completed / stats.total <= 0.4)
+    .map(([key]) => CATEGORY_LABELS[key as Task['category']] || key);
+
+  const totalCount = Object.values(totals).reduce((sum, s) => sum + s.total, 0);
+
+  return {
+    completedCount: completions?.length || 0,
+    totalCount,
+    improvingAreas,
+    strugglingAreas,
+  };
+}
+
+export async function regenerateStudyPlan(
+  userId: string
+): Promise<{ plan?: NormalizedStudyPlan; error?: string }> {
+  try {
+    const { data: planRow, error: planError } = await supabase
+      .from('study_plan')
+      .select('id, plan_data')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (planError) throw planError;
+
+    const currentPlan = planRow?.plan_data as NormalizedStudyPlan | undefined;
+    const planId = currentPlan?.plan_id || planRow?.id || '';
+
+    const { completions } = planId
+      ? await getTaskCompletions(userId, planId)
+      : { completions: [] };
+
+    const { notes, error: notesError } = await getAINotes(userId);
+    if (notesError) throw new Error(notesError);
+
+    const summaryText = typeof (notes as any)?.onboarding_summary === 'string'
+      ? (notes as any).onboarding_summary
+      : 'NO DATA: onboarding summary missing';
+
+    const progressData = buildProgressSignals(currentPlan, completions || []);
+
+    return await createDetailedStudyPlan(userId, {
+      summary: summaryText,
+      aiNotes: notes as Record<string, any>,
+      progressData,
+      previousPlanId: planId || undefined,
+      previousPlanVersion: currentPlan?.version,
+    });
+  } catch (error) {
+    console.error('[studyPlan] regenerateStudyPlan failed', error);
     return { error: (error as Error).message };
   }
 }

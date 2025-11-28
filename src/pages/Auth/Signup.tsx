@@ -5,7 +5,7 @@ import { AuthComponent } from '../../components/ui/sign-up';
 import { useEffect, useRef } from 'react';
 
 const Signup = () => {
-  const { signInWithGoogle, signUp, user, session, loading } = useAuth();
+  const { signInWithGoogle, signUp, user } = useAuth();
   const navigate = useNavigate();
   const isSigningUp = useRef(false);
 

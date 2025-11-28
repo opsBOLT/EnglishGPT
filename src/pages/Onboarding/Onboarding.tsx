@@ -1,11 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { ChevronRight, ChevronLeft, Mic, MicOff } from 'lucide-react';
-import { PixelAnimation } from '../../components/PixelAnimation';
 import { evaluateEssayPublic, EvaluateResult } from '../../services/markingClient';
-import { saveOnboardingSummary } from '../../services/api';
+import { saveOnboardingSummary, getAINotes } from '../../services/api';
 import { createDetailedStudyPlan } from '../../services/studyPlan';
 import SnowballSpinner from '../../components/SnowballSpinner';
 import SiriOrb from '../../components/ui/siri-orb';
@@ -567,7 +567,7 @@ const Onboarding = () => {
           item: {
             type: 'message',
             role: 'user',
-            content: [{ type: 'input_text', text: 'Please greet me and introduce yourself. Try to identify: The Goals, including what grade the student is aiming for and when the student needs to be exam-ready. It should understand the student’s Strengths, such as how confident the student is with reading comprehension, where the student feels strongest in vocabulary, which text types the student has written successfully, which text types feel easiest to the student, and whether the student understands the VORPF framework and the QME method. It should also understand the student’s Weaknesses, including where the student struggles most in Paper 1, how the student finds paraphrasing questions, whether the student struggles with summary writing, if language analysis is difficult for the student, whether the student finds evaluation questions hard, what punctuation mistakes the student makes, what spelling words trip the student up, which text types the student avoids or finds hardest, and what mistakes keep recurring in the student’s work. Additionally, you should understand the student’s Learning Style & Patterns, such as how the student learns best (examples first, theory first, or something else), how the student performs under time pressure, what type of feedback helps the student most, what motivates the student to study, and what the student has recently realized about their learning. Finally, you should understand the student’s Readiness, including how ready the student feels for Paper 1 and Paper 2, and what should be focused on first. PLEASE PLEASE PLEASE PLEASE PLEASE UNDER NO CIRCUMSTANCES HELP ME WITH SPECIFIC STUFF OR GIVE ME TIPS TO IMPROVE ON MY WEAKNESSES. JUST IDENTIFY BROAD AND SPECIFIC WEAKNESSES AND STRENGTHS AND THEN MOVE ON. DO NOT TALK TOO MUCH. LET ME DO MOST OF THE TALKING. YOUR FIRST SENTENCE SHOULD BE VERY VERY VERY VERY SHORT AND NOT EXPLAIN MUCH. JUST SAY EXACTLY "Hey I am an AI English Teacher, here to identify where you are re struggling in the subject"' }],
+            content: [{ type: 'input_text', text: 'Please greet me and introduce yourself. Try to identify: The Goals, including what grade the student is aiming for and when the student needs to be exam-ready. PLEASE PLEASE PLEASE PLEASE PLEASE UNDER NO CIRCUMSTANCES HELP ME WITH SPECIFIC STUFF OR GIVE ME TIPS TO IMPROVE ON MY WEAKNESSES. JUST IDENTIFY BROAD AND SPECIFIC WEAKNESSES AND STRENGTHS AND THEN MOVE ON. DO NOT TALK TOO MUCH. LET ME DO MOST OF THE TALKING. YOUR FIRST SENTENCE SHOULD BE VERY VERY VERY VERY SHORT AND NOT EXPLAIN MUCH. JUST SAY EXACTLY "Hey I am an AI English Teacher, here to identify where you are re struggling in the subject"' }],
           },
         };
         const startResponse = { type: 'response.create' };
@@ -961,25 +961,6 @@ Rules:
         essay: formData.weaknessEssay,
       });
 
-      await requestSummary(markingResult);
-
-      if (!summaryRef.current.trim()) {
-        throw new Error('Onboarding summary is empty after generation.');
-      }
-
-      const planResult = await createDetailedStudyPlan(user.id, {
-        summary: summaryRef.current,
-        markingResult,
-        essay: formData.weaknessEssay,
-        questionType: formData.weaknessQuestionType,
-      });
-
-      if (planResult.error) {
-        console.error('[studyPlan] generation failed', planResult.error);
-      }
-
-      await persistOnboarding(markingResult);
-
       navigate(`/onboarding/${user.id}/result`, {
         state: {
           result: markingResult,
@@ -988,6 +969,36 @@ Rules:
           examStruggles: formData.examStruggles,
         },
       });
+
+      // Continue the heavy lifting in the background
+      void (async () => {
+        try {
+          await requestSummary(markingResult);
+
+          if (!summaryRef.current.trim()) {
+            throw new Error('Onboarding summary is empty after generation.');
+          }
+
+          const { notes } = await getAINotes(user.id);
+          console.log('[onboarding] Fetched AI notes for study plan generation:', notes ? 'Available' : 'Not found');
+
+          const planResult = await createDetailedStudyPlan(user.id, {
+            summary: summaryRef.current,
+            aiNotes: notes as Record<string, any>,
+            markingResult,
+            essay: formData.weaknessEssay,
+            questionType: formData.weaknessQuestionType,
+          });
+
+          if (planResult.error) {
+            console.error('[studyPlan] generation failed', planResult.error);
+          }
+
+          await persistOnboarding(markingResult);
+        } catch (err) {
+          console.error('[onboarding] Background onboarding tasks failed', err);
+        }
+      })();
     } catch (err) {
       console.error('[onboarding] Onboarding completion failed', err);
       setError('Failed to complete onboarding. Please try again.');
@@ -1095,22 +1106,12 @@ Rules:
   const content = getQuestionContent();
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center overflow-hidden">
+    <div className="min-h-screen relative flex items-center justify-center overflow-hidden" style={{ background: "radial-gradient(125% 125% at 50% 10%, #fff 40%, #7c3aed 100%)" }}>
       {loading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/85 backdrop-blur-md">
           <SnowballSpinner size="lg" label="Marking your response..." />
         </div>
       )}
-      {/* Pixel Animation Background */}
-      <div className="absolute inset-0 z-0">
-        <PixelAnimation
-          colorHueStart={280}
-          colorHueRange={40}
-          pixelGap={8}
-          animationSpeed={0.2}
-          animationDuration={400}
-        />
-      </div>
 
       {/* Content */}
       <div className="w-full h-screen flex items-center justify-center relative z-10 px-8">
