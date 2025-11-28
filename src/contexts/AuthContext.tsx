@@ -76,7 +76,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const shouldFetchProfile =
           eventName === 'SIGNED_IN' ||
           eventName === 'TOKEN_REFRESHED' ||
-          eventName === 'USER_UPDATED';
+          eventName === 'USER_UPDATED' ||
+          eventName === 'SIGNED_UP';
 
         if (session && isSessionExpired(session)) {
           supabase.auth.signOut();
