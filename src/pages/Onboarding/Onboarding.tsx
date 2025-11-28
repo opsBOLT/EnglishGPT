@@ -908,6 +908,14 @@ Rules:
     }
   }, [user?.id, userId, navigate]);
 
+  // Redirect to dashboard if onboarding is already completed
+  useEffect(() => {
+    if (user?.onboarding_completed) {
+      console.log('[onboarding] User has already completed onboarding, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user?.onboarding_completed, navigate]);
+
   // Reset allowNext when leaving step 1
   useEffect(() => {
     if (currentStep !== 1) {

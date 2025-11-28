@@ -37,13 +37,13 @@ const categoryLabels: Record<string, string> = {
   general: 'General',
 };
 
-const planCategoryToStudyCategory: Record<string, string> = {
-  paper1: 'Paper 1 Guide/Revision',
-  paper2: 'Paper 2 Guide/Revision',
-  examples: 'High-Level Example Responses',
-  text_types: 'Text Types Criteria',
-  vocabulary: 'Vocabulary Improvement',
-  general: 'Paper 1 Guide/Revision',
+const categoryToGuideKey: Record<string, string> = {
+  paper1: 'paper1',
+  paper2: 'paper2',
+  examples: 'examples',
+  text_types: 'text-types',
+  vocabulary: 'vocabulary',
+  general: 'paper1',
 };
 
 const Study = () => {
@@ -147,11 +147,25 @@ const Study = () => {
   }, [activePlan, isTaskComplete, isTestMode]);
 
   const handleStart = (task: StudyTaskCard) => {
-    const categoryId =
-      planCategoryToStudyCategory[task.category] || planCategoryToStudyCategory.general;
-    navigate(`/study/session/${encodeURIComponent(categoryId)}`, {
-      state: { taskId: task.id },
-    });
+    // Check if this is a practice or study task
+    const taskData = activePlan?.weeks
+      ?.flatMap(w => w.daily_tasks)
+      ?.flatMap(d => d.tasks)
+      ?.find(t => t.id === task.id);
+
+    if (taskData?.task_type === 'practice') {
+      // Navigate to practice session with question type
+      const questionType = taskData.practice_question_type || 'narrative_writing';
+      navigate(`/practice/session?type=${questionType}`, {
+        state: { taskId: task.id },
+      });
+    } else {
+      // Navigate to study session
+      const guideKey = categoryToGuideKey[task.category] || 'paper1';
+      navigate(`/study/session/${guideKey}`, {
+        state: { taskId: task.id },
+      });
+    }
   };
 
   return (
@@ -159,29 +173,20 @@ const Study = () => {
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-slate-500">Stay on track</p>
-            <h1 className="text-3xl font-bold text-slate-900">Study workspace</h1>
-            <p className="text-slate-600 mt-1">
-              Today&apos;s plan, ready to launch with one click.
-            </p>
+            <h1 className="text-3xl font-bold text-slate-900">Study</h1>
           </div>
           <ThreeDButton
             variant="outline"
             onClick={() => navigate('/calendar')}
             className="border-slate-200 text-slate-700 hover:text-slate-900"
           >
-            View calendar
+            Calendar
           </ThreeDButton>
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6">
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-semibold text-slate-900">Today&apos;s tasks</h2>
-              <p className="text-sm text-slate-500">
-                Same tasks you see on the dashboard, with quick start buttons.
-              </p>
-            </div>
+            <h2 className="text-xl font-semibold text-slate-900">Today</h2>
             {loading && (
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -198,10 +203,9 @@ const Study = () => {
 
           {tasks.length === 0 && !loading ? (
             <div className="text-center py-10 text-slate-600">
-              <p className="font-semibold text-slate-800 mb-2">No tasks scheduled for today</p>
-              <p className="text-sm mb-4">Check your calendar or generate a study plan.</p>
+              <p className="font-semibold text-slate-800 mb-2">No tasks today</p>
               <ThreeDButton onClick={() => navigate('/study-plan/generate')}>
-                Generate study plan
+                Generate plan
               </ThreeDButton>
             </div>
           ) : (

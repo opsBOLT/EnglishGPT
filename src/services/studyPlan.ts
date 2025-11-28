@@ -24,6 +24,8 @@ export type Task = {
   title: string;
   description: string;
   category: 'paper1' | 'paper2' | 'examples' | 'text_types' | 'vocabulary' | 'general';
+  task_type: 'study' | 'practice';  // study = reading/learning, practice = doing questions
+  practice_question_type?: string;  // For practice tasks: 'narrative_writing', 'descriptive_writing', 'directed_writing'
   duration_minutes: number;
   time_slot?: string;  // Optional scheduling hint (e.g., "morning", "afternoon")
   status: 'pending' | 'in_progress' | 'completed';
@@ -199,21 +201,55 @@ function addWeeks(date: Date, weeks: number): Date {
 }
 
 /**
- * Parse a task string into a structured Task object
- * Extracts category and duration from the task description
+ * Parse a task (string or object) into a structured Task object
+ * Handles both legacy string format and new structured format
  */
-function parseTaskString(taskStr: string, day: string, index: number, aiNotes?: Record<string, any>): Task {
-  // Try to extract duration from patterns like "15 min", "20-min", "30 minutes"
-  const durationMatch = taskStr.match(/(\d+)[\s-]*(min|minute|minutes)/i);
-  const duration = durationMatch ? parseInt(durationMatch[1]) : 20; // default 20 min
+function parseTaskString(taskInput: string | any, day: string, index: number, aiNotes?: Record<string, any>): Task {
+  // If it's already a structured task object, use it with minimal processing
+  if (typeof taskInput === 'object' && taskInput !== null) {
+    return {
+      id: taskInput.id || generateTaskId(day, index),
+      title: taskInput.title || 'Untitled Task',
+      description: taskInput.description || '',
+      category: taskInput.category || 'general',
+      task_type: taskInput.task_type || 'study',
+      practice_question_type: taskInput.practice_question_type || null,
+      duration_minutes: taskInput.duration_minutes || 20,
+      time_slot: taskInput.time_slot,
+      status: taskInput.status || 'pending',
+      completed_at: taskInput.completed_at,
+      ai_note_references: taskInput.ai_note_references,
+    };
+  }
 
-  // Determine category based on keywords
+  // Legacy string parsing
+  const taskStr = String(taskInput);
+  const durationMatch = taskStr.match(/(\d+)[\s-]*(min|minute|minutes)/i);
+  const duration = durationMatch ? parseInt(durationMatch[1]) : 20;
+
   let category: Task['category'] = 'general';
+  let task_type: Task['task_type'] = 'study';
+  let practice_question_type: string | null = null;
+
   const lowerTask = taskStr.toLowerCase();
+
+  // Determine task type
+  if (lowerTask.includes('practice') || lowerTask.includes('write')) {
+    task_type = 'practice';
+  }
+
+  // Determine category and practice type
   if (lowerTask.includes('paper 1') || lowerTask.includes('paper1') || lowerTask.includes('reading') || lowerTask.includes('comprehension') || lowerTask.includes('summary') || lowerTask.includes('language analysis')) {
     category = 'paper1';
-  } else if (lowerTask.includes('paper 2') || lowerTask.includes('paper2') || lowerTask.includes('directed writing') || lowerTask.includes('composition') || lowerTask.includes('narrative') || lowerTask.includes('descriptive')) {
+  } else if (lowerTask.includes('paper 2') || lowerTask.includes('paper2') || lowerTask.includes('directed writing') || lowerTask.includes('composition')) {
     category = 'paper2';
+    if (lowerTask.includes('narrative')) {
+      practice_question_type = 'narrative_writing';
+    } else if (lowerTask.includes('descriptive')) {
+      practice_question_type = 'descriptive_writing';
+    } else if (lowerTask.includes('directed')) {
+      practice_question_type = 'directed_writing';
+    }
   } else if (lowerTask.includes('text type') || lowerTask.includes('letter') || lowerTask.includes('article') || lowerTask.includes('speech') || lowerTask.includes('report') || lowerTask.includes('diary') || lowerTask.includes('interview')) {
     category = 'text_types';
   } else if (lowerTask.includes('vocabulary') || lowerTask.includes('word') || lowerTask.includes('vocab')) {
@@ -222,23 +258,17 @@ function parseTaskString(taskStr: string, day: string, index: number, aiNotes?: 
     category = 'examples';
   }
 
-  // Extract title (first 50 chars or until punctuation)
   const title = taskStr.split(/[.!?]/)[0].slice(0, 60).trim() || taskStr.slice(0, 60).trim();
 
-  // Find relevant AI notes that might have informed this task
   const aiNoteRefs: string[] = [];
   if (aiNotes) {
-    // Look for AI note fields that might relate to this task's category
     const relevantFields = Object.keys(aiNotes).filter(key => {
       const value = aiNotes[key];
       if (!value || value === 'NO DATA') return false;
-
-      // Check if task content relates to this AI note field
       if (category === 'paper1' && key.includes('paper1')) return true;
       if (category === 'paper2' && key.includes('paper2')) return true;
       if (category === 'text_types' && key.includes('text_type')) return true;
       if (category === 'vocabulary' && key.includes('vocabulary')) return true;
-
       return false;
     });
     aiNoteRefs.push(...relevantFields);
@@ -249,6 +279,8 @@ function parseTaskString(taskStr: string, day: string, index: number, aiNotes?: 
     title,
     description: taskStr,
     category,
+    task_type,
+    practice_question_type,
     duration_minutes: duration,
     status: 'pending',
     ai_note_references: aiNoteRefs.length > 0 ? aiNoteRefs : undefined,
@@ -334,13 +366,9 @@ export async function createDetailedStudyPlan(userId: string, payload: PlanPaylo
   const aiNotesContext = aiNotes ? buildAINotesContext(aiNotes) : null;
 
   const prompt = `
-You are an elite IGCSE English tutor. Build a concrete, actionable study plan using:
-1) The onboarding conversation summary (student goals/weaknesses/strengths).
-2) The automated marking result (question type, score, feedback).
-3) The essay text (evidence of style/accuracy).
-4) The comprehensive AI-identified skill profile and learning patterns (36 data points).
+You are an elite IGCSE English tutor. Build a personalized study plan using the student's data.
 
-NON-NEGOTIABLE OUTPUT FORMAT (JSON ONLY, NO MARKDOWN, NO PROSE OUTSIDE JSON):
+OUTPUT FORMAT (JSON ONLY, NO MARKDOWN):
 {
   "overview": string,
   "targets": { "target_grade": string, "time_frame_weeks": number, "weekly_hours": number },
@@ -353,31 +381,87 @@ NON-NEGOTIABLE OUTPUT FORMAT (JSON ONLY, NO MARKDOWN, NO PROSE OUTSIDE JSON):
       "week_number": number,
       "theme": string,
       "goals": string[],
-      "focus_papers": string[],            // e.g., ["Paper 1 Q2d", "Paper 2 Directed Writing"]
-      "writing_tasks": string[],
-      "reading_tasks": string[],
-      "drills": string[],                  // include duration and timed constraints
-      "checkpoints": string[]              // measurable success criteria
+      "focus_papers": string[],
+      "checkpoints": string[]
     }
   ],
-  "daily_micro_tasks": {
-    "monday": string[], "tuesday": string[], "wednesday": string[],
-    "thursday": string[], "friday": string[], "saturday": string[], "sunday": string[]
-  },
-  "exam_drills": string[],                 // concrete past-paper style prompts aligned to weaknesses
-  "feedback_loops": string[],              // self-check, model answers, timed rewrites, peer/coach review
-  "resources": string[],                   // links or search terms
-  "reflection_prompts": string[]           // short self-evaluation prompts
+  "weeks": [
+    {
+      "week_number": number,
+      "theme": string,
+      "goals": string[],
+      "focus_papers": string[],
+      "checkpoints": string[],
+      "daily_tasks": [
+        {
+          "day": "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday",
+          "tasks": [
+            {
+              "title": string,
+              "description": string,
+              "category": "paper1" | "paper2" | "examples" | "text_types" | "vocabulary" | "general",
+              "task_type": "study" | "practice",
+              "practice_question_type": string | null,
+              "duration_minutes": number
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "exam_drills": string[],
+  "feedback_loops": string[],
+  "resources": string[],
+  "reflection_prompts": string[]
 }
 
-CONTENT RULES (BE EXTREMELY SPECIFIC AND USEFUL):
-- Use SUMMARY to anchor goals/weaknesses/strengths.
-- Use MARKING_RESULT to prioritize fixes; cite exact weak question types (e.g., Paper 1 Q2d Writer's Effect).
-- Default targets if missing: target_grade="A", weekly_hours=4–6, time_frame_weeks=8.
-- Weekly plan: 2–3 timed drills/week with decreasing prep time; measurable checkpoints (e.g., "score 6/10 on timed Q2d under 12 minutes").
-- Include writer's effect drills with effect-on-reader language stems if weak; include directed writing/narrative/descriptive scaffolds if weak; include vocabulary/sentence-variation drills for concision/precision.
-- Daily micro tasks: 15–30 minute tasks, explicit and actionable.
-- Drills must state duration and timing constraints.
+CRITICAL TASK RULES:
+
+1. SIMPLE TITLES ONLY:
+   - Good: "Study Narrative Writing", "Practice Descriptive Writing", "Study VORPF"
+   - Bad: "25-min narrative micro-write: 150 words on a scaffolded prom"
+   - Keep titles SHORT and CLEAR (max 5 words)
+
+2. TASK TYPES:
+   - task_type: "study" = Reading guides, learning content, studying techniques
+   - task_type: "practice" = Doing practice questions, writing essays, past papers
+
+3. PRACTICE QUESTION TYPES (for practice tasks only):
+   - "narrative_writing" - for narrative composition practice
+   - "descriptive_writing" - for descriptive composition practice
+   - "directed_writing" - for Paper 2 Section A practice
+   - null - for study tasks or non-writing practice
+
+4. EXAMPLES:
+   Good study task:
+   {
+     "title": "Study Narrative Writing",
+     "description": "Learn narrative techniques and structure",
+     "category": "paper2",
+     "task_type": "study",
+     "practice_question_type": null,
+     "duration_minutes": 30
+   }
+
+   Good practice task:
+   {
+     "title": "Practice Narrative Writing",
+     "description": "Write a narrative composition",
+     "category": "paper2",
+     "task_type": "practice",
+     "practice_question_type": "narrative_writing",
+     "duration_minutes": 45
+   }
+
+5. MIX OF TASKS:
+   - Balance study and practice tasks (roughly 40% study, 60% practice)
+   - Start each week with study tasks, then move to practice
+   - Each day should have 2-3 tasks maximum
+
+CONTENT RULES:
+- Default targets: target_grade="A", weekly_hours=5, time_frame_weeks=8
+- Use student data to personalize
+- Weekly checkpoints should be measurable
 |
 CONTEXT ABOUT IGCSE ENGLISH. EVERYTHING YOU NEED TO KNOW AND MUST READ, DO NOT MAKE ANY GUIDES, OR ANYHTING ELSE THAN WHAT IS IN THESE RULES. DO NOT DEVIATE FROM THESE RULES UP. THIS IS JUST FOR CONTEXT:
 
