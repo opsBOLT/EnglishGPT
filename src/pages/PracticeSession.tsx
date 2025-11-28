@@ -44,7 +44,6 @@ export function PracticeSession({ userId: propsUserId }: PracticeSessionProps) {
   const [currentStep, setCurrentStep] = useState<'guidance' | 'practice' | 'results'>('guidance');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, QuestionAnswer>>({});
-  const [allMarked, setAllMarked] = useState(false);
 
   const textareaRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
 
@@ -62,7 +61,7 @@ export function PracticeSession({ userId: propsUserId }: PracticeSessionProps) {
       try {
         // Fetch user's AI notes for personalization
         const { notes: aiNotes } = await getAINotes(userId);
-        const userSummary = (aiNotes as any)?.onboarding_summary || '';
+        const userSummary = String((aiNotes as Record<string, unknown>)?.onboarding_summary || '');
 
         // Generate practice session using practice guides
         const { session, error } = await generatePracticeSession(
@@ -198,7 +197,6 @@ export function PracticeSession({ userId: propsUserId }: PracticeSessionProps) {
       })
     );
 
-    setAllMarked(true);
     setCurrentStep('results');
   };
 

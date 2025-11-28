@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Practice Content Service
  * AI-powered practice sessions using practiceGuides.ts
@@ -6,6 +5,9 @@
 
 import { PRACTICE_GUIDES, getPracticeGuide, type PracticeGuideType } from '../data/practiceGuides';
 import { aiLogger } from './aiLogger';
+
+// Re-export types
+export type { PracticeGuideType };
 
 export type PracticeSessionPlan = {
   topic: string;

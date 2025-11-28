@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { IGCSE_MAIN_GUIDES, type IgcseGuide } from '../data/igcseGuides';
 import { aiLogger } from './aiLogger';
 

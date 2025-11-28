@@ -58,7 +58,7 @@ function buildDirectedWritingContent(): string {
       });
   });
 
-  let content = `# Directed Writing - Paper 2 Section A
+  const content = `# Directed Writing - Paper 2 Section A
 
 ## Overview
 
@@ -114,7 +114,7 @@ function buildDescriptiveWritingContent(): string {
       });
   });
 
-  let content = `# Descriptive Writing - Paper 2 Section B
+  const content = `# Descriptive Writing - Paper 2 Section B
 
 ## Overview
 
@@ -177,7 +177,7 @@ function buildNarrativeWritingContent(): string {
       });
   });
 
-  let content = `# Narrative Writing - Paper 2 Section B
+  const content = `# Narrative Writing - Paper 2 Section B
 
 ## Overview
 

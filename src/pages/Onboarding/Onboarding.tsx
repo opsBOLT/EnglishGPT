@@ -10,6 +10,7 @@ import { createDetailedStudyPlan } from '../../services/studyPlan';
 import SnowballSpinner from '../../components/SnowballSpinner';
 import SiriOrb from '../../components/ui/siri-orb';
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+const REALTIME_MODEL = 'gpt-realgpt-4o-mini-realtime-preview-2024-12-17time-mini';
 const ENGLISHGPT_GENERAL_API_KEY = import.meta.env.VITE_ENGLISHGPT_GENERAL_API_KEY;
 const SYSTEM_PROMPT = `You are a helpful assistant for students preparing for Cambridge IGCSE First Language English (0500). You exist NOT to give specific tips, guidance, or advice, but to help students understand the structure of the exam and how to approach it. You will not give specific tips or advice, but to gather information about them so other AI agents can give them a more personalised experience.
 Please introduce yourself like this: "Hey! I'm an AI English teacher, here to understand your strengths and weaknesses so I can help you improve. Let's get started!"
@@ -548,7 +549,7 @@ const Onboarding = () => {
         const sessionUpdate = {
           type: 'session.update',
           session: {
-            model: 'gpt-realtime-mini',
+            model: REALTIME_MODEL,
             modalities: ['audio', 'text'],
             voice: 'alloy',
             input_audio_transcription: {
@@ -649,11 +650,12 @@ const Onboarding = () => {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const response = await fetch('https://api.openai.com/v1/realtime', {
+      const response = await fetch(`https://api.openai.com/v1/realtime?model=${encodeURIComponent(REALTIME_MODEL)}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${OPENAI_API_KEY}`,
           'Content-Type': 'application/sdp',
+          'OpenAI-Beta': 'realtime=v1',
         },
         body: offer.sdp,
       });

@@ -52,7 +52,7 @@ export function StudySession({ userId: propsUserId }: StudySessionProps) {
   const { startSession, updateSession, completeSession } = useStudySession(userId);
   const { messages, sendMessage, loading: aiLoading } = useStudyAI(
     userId,
-    `${guideKey} Study` as any
+    `${guideKey} Study`
   );
 
   // Timer
@@ -77,7 +77,7 @@ export function StudySession({ userId: propsUserId }: StudySessionProps) {
       try {
         // Fetch user's AI notes for personalization
         const { notes: aiNotes } = await getAINotes(userId);
-        const userSummary = (aiNotes as any)?.onboarding_summary || '';
+        const userSummary = String((aiNotes as Record<string, unknown>)?.onboarding_summary || '');
 
         // Generate study session using igcseGuides
         const { session, error } = await generateStudySession(
@@ -115,6 +115,7 @@ export function StudySession({ userId: propsUserId }: StudySessionProps) {
         void handleEndSession();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [guideKey, userId]);
 
   // Auto-save notes every 10 seconds
@@ -239,8 +240,9 @@ export function StudySession({ userId: propsUserId }: StudySessionProps) {
     // Complete session
     const analysis = await completeSession(sessionId);
 
-    if (analysis && (analysis as any).weak_topics) {
-      alert(`Session completed! AI identified these areas to focus on: ${(analysis as any).weak_topics.join(', ')}`);
+    if (analysis && (analysis as Record<string, unknown>).weak_topics) {
+      const weakTopics = (analysis as Record<string, unknown>).weak_topics as string[];
+      alert(`Session completed! AI identified these areas to focus on: ${weakTopics.join(', ')}`);
     }
 
     navigate('/study');
