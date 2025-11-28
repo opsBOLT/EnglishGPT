@@ -544,10 +544,13 @@ const Onboarding = () => {
       dc.onopen = () => {
         console.log('[realtime] data channel open');
 
-        // Enable input audio transcription
+        // Enable input audio transcription and configure session
         const sessionUpdate = {
           type: 'session.update',
           session: {
+            model: 'gpt-realtime-mini',
+            modalities: ['audio', 'text'],
+            voice: 'alloy',
             input_audio_transcription: {
               model: 'whisper-1',
             },
@@ -646,23 +649,13 @@ const Onboarding = () => {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const sessionConfig = JSON.stringify({
-        model: 'gpt-realtime-mini',
-        modalities: ['audio', 'text'],
-        voice: 'alloy',
-      });
-
-      const fd = new FormData();
-      fd.set('sdp', offer.sdp || '');
-      fd.set('session', sessionConfig);
-
-      const response = await fetch('https://api.openai.com/v1/realtime/calls', {
+      const response = await fetch('https://api.openai.com/v1/realtime', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${OPENAI_API_KEY}`,
-          'OpenAI-Beta': 'realtime=v1',
+          'Content-Type': 'application/sdp',
         },
-        body: fd,
+        body: offer.sdp,
       });
 
       if (!response.ok) {
