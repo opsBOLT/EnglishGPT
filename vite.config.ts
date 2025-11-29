@@ -30,5 +30,21 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    build: {
+      chunkSizeWarningLimit: 900,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('@supabase')) return 'supabase';
+              if (id.includes('livekit')) return 'livekit';
+              if (id.includes('@tremor') || id.includes('recharts')) return 'charts';
+              if (id.includes('framer-motion')) return 'motion';
+              if (id.includes('@radix-ui') || id.includes('@headlessui')) return 'ui-kit';
+            }
+          },
+        },
+      },
+    },
   };
 });
