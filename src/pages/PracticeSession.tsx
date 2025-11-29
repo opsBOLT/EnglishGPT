@@ -5,11 +5,11 @@
  */
 
 import { useState, useEffect, useRef, useCallback, type MutableRefObject } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { generatePracticeSession, type PracticeSessionPlan, type PracticeGuideType, getQuestionTypeLabel } from '../services/practiceContent';
 import { evaluateEssayPublic, type EvaluateResult } from '../services/markingClient';
-import { getAINotes } from '../services/api';
+import { getAINotes, getPracticeSession, updatePracticeSession } from '../services/api';
 import { Button } from '../components/ui/3d-button';
 import { Card } from '../components/ui/card';
 import { Loader2, Send, X, CheckCircle, BookOpen, Award, Target, TrendingUp } from 'lucide-react';
@@ -30,12 +30,14 @@ type QuestionAnswer = {
 };
 
 export function PracticeSession({ userId: propsUserId }: PracticeSessionProps) {
+  const { sessionId: urlSessionId } = useParams<{ sessionId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const userId = propsUserId || user?.id || '';
 
   const practiceType = searchParams.get('type') as PracticeGuideType | null;
+  const sessionId = urlSessionId || null;
 
   const [sessionPlan, setSessionPlan] = useState<PracticeSessionPlan | null>(null);
   const [aiSessionLoading, setAiSessionLoading] = useState(false);
@@ -47,13 +49,26 @@ export function PracticeSession({ userId: propsUserId }: PracticeSessionProps) {
 
   const textareaRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
 
-  // Generate practice session on mount
+  // Generate practice session on mount and fetch existing session
   useEffect(() => {
     let canceled = false;
 
     const initSession = async () => {
+      if (!sessionId) {
+        setPlanError('No session ID provided');
+        return;
+      }
+
       if (!practiceType) {
         setPlanError('Practice type not specified');
+        return;
+      }
+
+      // Fetch the session from database
+      const { session: dbSession, error: sessionError } = await getPracticeSession(sessionId);
+
+      if (sessionError || !dbSession) {
+        setPlanError('Failed to load practice session. Please try again.');
         return;
       }
 
@@ -96,7 +111,66 @@ export function PracticeSession({ userId: propsUserId }: PracticeSessionProps) {
     return () => {
       canceled = true;
     };
-  }, [practiceType, userId]);
+  }, [practiceType, userId, sessionId]);
+
+  // Save session to database
+  const saveSessionToDatabase = useCallback(async () => {
+    if (!sessionId || !sessionPlan) return;
+
+    try {
+      // Prepare questions data
+      const questionsData = sessionPlan.selected_questions.map((q, idx) => ({
+        question_id: `${idx}`,
+        question_text: q.question_text,
+        exam_series: q.exam_series,
+        marks: q.marks,
+        user_answer: answers[idx]?.answer || '',
+        word_count: answers[idx]?.wordCount || 0,
+        marking_result: answers[idx]?.markingResult || null,
+      }));
+
+      // Calculate total grade (average of all marked questions)
+      const markedAnswers = Object.values(answers).filter(a => a.markingResult);
+      const totalGrade = markedAnswers.length > 0
+        ? markedAnswers.reduce((sum, a) => {
+            const score = typeof a.markingResult?.total_score === 'number' ? a.markingResult.total_score : 0;
+            return sum + score;
+          }, 0) / markedAnswers.length
+        : 0;
+
+      // Extract weak points from marking results
+      const weakPoints: string[] = [];
+      Object.values(answers).forEach(a => {
+        if (a.markingResult?.improvement_suggestions) {
+          a.markingResult.improvement_suggestions.forEach(s => {
+            if (!weakPoints.includes(s)) {
+              weakPoints.push(s);
+            }
+          });
+        }
+      });
+
+      // Update session in database
+      await updatePracticeSession(sessionId, {
+        questions_data: questionsData,
+        total_grade: totalGrade,
+        weak_points: weakPoints.slice(0, 5), // Limit to top 5
+      });
+    } catch (error) {
+      console.error('[PracticeSession] Failed to save session:', error);
+    }
+  }, [sessionId, sessionPlan, answers]);
+
+  // Auto-save answers to database every 30 seconds
+  useEffect(() => {
+    if (!sessionId || !sessionPlan) return;
+
+    const saveInterval = setInterval(() => {
+      void saveSessionToDatabase();
+    }, 30000); // Save every 30 seconds
+
+    return () => clearInterval(saveInterval);
+  }, [sessionId, sessionPlan, saveSessionToDatabase]);
 
   // Handle answer change
   const handleAnswerChange = (questionIndex: number, value: string) => {
@@ -114,7 +188,7 @@ export function PracticeSession({ userId: propsUserId }: PracticeSessionProps) {
 
   // Mark a single question
   const handleMarkQuestion = async (questionIndex: number) => {
-    if (!sessionPlan) return;
+    if (!sessionPlan || !sessionId) return;
 
     const answer = answers[questionIndex];
     if (!answer || !answer.answer.trim()) {
@@ -161,6 +235,9 @@ export function PracticeSession({ userId: propsUserId }: PracticeSessionProps) {
           isMarking: false,
         },
       }));
+
+      // Save to database immediately after marking
+      await saveSessionToDatabase();
     } catch (error) {
       console.error('[PracticeSession] Marking failed', error);
       alert(`Marking failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -176,7 +253,7 @@ export function PracticeSession({ userId: propsUserId }: PracticeSessionProps) {
 
   // Mark all questions
   const handleMarkAll = async () => {
-    if (!sessionPlan) return;
+    if (!sessionPlan || !sessionId) return;
 
     const unansweredQuestions = sessionPlan.selected_questions
       .map((_, idx) => idx)
@@ -197,13 +274,18 @@ export function PracticeSession({ userId: propsUserId }: PracticeSessionProps) {
       })
     );
 
+    // Save final results to database
+    await saveSessionToDatabase();
+
     setCurrentStep('results');
   };
 
   // Handle end session
-  const handleEndSession = useCallback(() => {
+  const handleEndSession = useCallback(async () => {
+    // Save session before exiting
+    await saveSessionToDatabase();
     navigate('/practice');
-  }, [navigate]);
+  }, [navigate, saveSessionToDatabase]);
 
   // Loading screen
   if (aiSessionLoading) {

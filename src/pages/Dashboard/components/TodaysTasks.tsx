@@ -1,8 +1,10 @@
 import { Clock, ChevronRight } from 'lucide-react';
 import { Card, Flex, Text } from '@tremor/react';
 import { DailyTask } from '../../../types';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button as ThreeDButton } from '../../../components/ui/3d-button';
+import { useStudySession } from '../../../hooks/useStudyPlatform';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface TodaysTasksProps {
   tasks: DailyTask[];
@@ -10,6 +12,9 @@ interface TodaysTasksProps {
 }
 
 const TodaysTasks = ({ tasks }: TodaysTasksProps) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { startSession } = useStudySession(user?.id || '');
   const getCategoryColor = (category: string) => {
     const colors = {
       paper1: 'bg-[#f1e7ff] text-[#6f2dd2] border-[#e7d9ff]',
@@ -44,17 +49,16 @@ const TodaysTasks = ({ tasks }: TodaysTasksProps) => {
     return labels[category as keyof typeof labels] || category;
   };
 
-  const getSessionPath = (category: DailyTask['category']) => {
-    const studyCategoryMap: Record<DailyTask['category'], string> = {
-      paper1: 'Paper 1 Guide/Revision',
-      paper2: 'Paper 2 Guide/Revision',
-      examples: 'High-Level Example Responses',
-      text_types: 'Text Types Criteria',
-      vocabulary: 'Vocabulary Improvement',
-    };
+  const handleTaskClick = async (task: DailyTask) => {
+    // Create a study session in the database first
+    const sessionId = await startSession(task.category, 'study');
 
-    const resolved = studyCategoryMap[category] || category;
-    return `/study/session/${encodeURIComponent(resolved)}`;
+    if (sessionId) {
+      // Navigate to the study session with the session ID
+      navigate(`/study/session/${sessionId}`, {
+        state: { taskId: task.id },
+      });
+    }
   };
 
   return (
@@ -81,10 +85,10 @@ const TodaysTasks = ({ tasks }: TodaysTasksProps) => {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {tasks.map((task) => (
-            <Link
+            <button
               key={task.id}
-              to={getSessionPath(task.category)}
-              className="group rounded-2xl border-2 border-slate-200 outline outline-4 outline-slate-100/40 bg-slate-50/70 p-4 hover:-translate-y-1 transition-all hover:shadow-[0_14px_28px_rgba(15,23,42,0.15)] shadow-sm flex flex-col gap-3"
+              onClick={() => handleTaskClick(task)}
+              className="group rounded-2xl border-2 border-slate-200 outline outline-4 outline-slate-100/40 bg-slate-50/70 p-4 hover:-translate-y-1 transition-all hover:shadow-[0_14px_28px_rgba(15,23,42,0.15)] shadow-sm flex flex-col gap-3 text-left"
             >
               <div className="flex items-start justify-between">
                 <span
@@ -109,7 +113,7 @@ const TodaysTasks = ({ tasks }: TodaysTasksProps) => {
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#aa80f3]" />
               </div>
-            </Link>
+            </button>
           ))}
         </div>
       )}

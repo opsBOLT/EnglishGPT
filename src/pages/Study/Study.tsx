@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
 import { useAuth } from '../../contexts/AuthContext';
-import { useStudyPlan, useTaskCompletion } from '../../hooks/useStudyPlatform';
+import { useStudyPlan, useTaskCompletion, useStudySession } from '../../hooks/useStudyPlatform';
 import type { NormalizedStudyPlan, Task } from '../../services/studyPlan';
 import { Loader2, Play } from 'lucide-react';
 import { Button as ThreeDButton } from '../../components/ui/3d-button';
@@ -37,15 +37,6 @@ const categoryLabels: Record<string, string> = {
   general: 'General',
 };
 
-const categoryToGuideKey: Record<string, string> = {
-  paper1: 'paper1',
-  paper2: 'paper2',
-  examples: 'examples',
-  text_types: 'text-types',
-  vocabulary: 'vocabulary',
-  general: 'paper1',
-};
-
 const Study = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -56,6 +47,7 @@ const Study = () => {
     isTaskComplete,
     loading: completionLoading,
   } = useTaskCompletion(isTestMode ? '' : user?.id || '', plan?.plan_id || '');
+  const { startSession } = useStudySession(user?.id || '');
 
   const [tasks, setTasks] = useState<StudyTaskCard[]>([]);
 
@@ -146,7 +138,7 @@ const Study = () => {
     setTasks(mapped);
   }, [activePlan, isTaskComplete, isTestMode]);
 
-  const handleStart = (task: StudyTaskCard) => {
+  const handleStart = async (task: StudyTaskCard) => {
     // Check if this is a practice or study task
     const taskData = activePlan?.weeks
       ?.flatMap(w => w.daily_tasks)
@@ -160,11 +152,15 @@ const Study = () => {
         state: { taskId: task.id },
       });
     } else {
-      // Navigate to study session
-      const guideKey = categoryToGuideKey[task.category] || 'paper1';
-      navigate(`/study/session/${guideKey}`, {
-        state: { taskId: task.id },
-      });
+      // Create a study session in the database first
+      const sessionId = await startSession(task.category, 'study');
+
+      if (sessionId) {
+        // Navigate to study session with the session ID
+        navigate(`/study/session/${sessionId}`, {
+          state: { taskId: task.id },
+        });
+      }
     }
   };
 

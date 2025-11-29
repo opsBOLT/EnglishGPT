@@ -88,6 +88,80 @@ export async function saveOnboardingSummaryAndNotes(
 }
 
 /**
+ * Start a practice session
+ */
+export async function startPracticeSession(
+  userId: string,
+  _practiceType: string
+): Promise<{ sessionId?: string; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('practice_sessions')
+      .insert({
+        user_id: userId,
+        practice_type: 'personalized', // or could be 'past_paper' based on practiceType
+      })
+      .select('id')
+      .single();
+
+    if (error) throw error;
+
+    return { sessionId: data.id };
+  } catch (error) {
+    console.error('Error starting practice session:', error);
+    return { error: (error as Error).message };
+  }
+}
+
+/**
+ * Get practice session by ID
+ */
+export async function getPracticeSession(
+  sessionId: string
+): Promise<{ session?: any; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('practice_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
+
+    if (error) throw error;
+
+    return { session: data };
+  } catch (error) {
+    console.error('Error fetching practice session:', error);
+    return { error: (error as Error).message };
+  }
+}
+
+/**
+ * Update practice session with progress data
+ */
+export async function updatePracticeSession(
+  sessionId: string,
+  updates: {
+    questions_data?: any[];
+    total_grade?: number;
+    weak_points?: string[];
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase
+      .from('practice_sessions')
+      .update(updates)
+      .eq('id', sessionId);
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating practice session:', error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+/**
  * Generate and save AI study plan
  * NOTE: This function is deprecated. Use the new study plan generation flow via /study-plan/generate
  */
@@ -142,6 +216,28 @@ export async function startStudySession(
     return { sessionId: data.id };
   } catch (error) {
     console.error('Error starting study session:', error);
+    return { error: (error as Error).message };
+  }
+}
+
+/**
+ * Get study session by ID
+ */
+export async function getStudySession(
+  sessionId: string
+): Promise<{ session?: any; error?: string }> {
+  try {
+    const { data, error } = await supabase
+      .from('study_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
+
+    if (error) throw error;
+
+    return { session: data };
+  } catch (error) {
+    console.error('Error fetching study session:', error);
     return { error: (error as Error).message };
   }
 }

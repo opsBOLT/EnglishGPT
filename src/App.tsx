@@ -70,9 +70,9 @@ function App() {
             }
           />
 
-          {/* New study session route with category parameter */}
+          {/* Study session route with sessionId parameter */}
           <Route
-            path="/study/session/:category"
+            path="/study/session/:sessionId"
             element={
               <ProtectedRoute>
                 <StudySessionWithAuth />

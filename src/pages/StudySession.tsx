@@ -5,12 +5,12 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useStudySession, useStudyAI } from '../hooks/useStudyPlatform';
 import { useSessionTimer } from '../hooks/useSessionTimer';
 import { generateStudySession, type StudySessionPlan, type QuizQuestion } from '../services/studyContent';
-import { getAINotes } from '../services/api';
+import { getAINotes, getStudySession } from '../services/api';
 import { Button } from '../components/ui/3d-button';
 import { Card } from '../components/ui/card';
 import { Loader2, Send, Play, Pause, X, CheckCircle, BookOpen, Brain } from 'lucide-react';
@@ -23,8 +23,7 @@ interface StudySessionProps {
 }
 
 export function StudySession({ userId: propsUserId }: StudySessionProps) {
-  const { category } = useParams<{ category: string }>();
-  const [searchParams] = useSearchParams();
+  const { sessionId: urlSessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const userId = propsUserId || user?.id || '';
@@ -40,16 +39,14 @@ export function StudySession({ userId: propsUserId }: StudySessionProps) {
   const [sessionPlan, setSessionPlan] = useState<StudySessionPlan | null>(null);
   const [aiSessionLoading, setAiSessionLoading] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
+  const [guideKey, setGuideKey] = useState<string>('paper1');
 
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Get guide key from category or search params
-  const guideKey = searchParams.get('guide') || category || 'paper1';
-
   // Backend integration
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const { startSession, updateSession, completeSession } = useStudySession(userId);
+  const sessionId = urlSessionId || null;
+  const { updateSession, completeSession } = useStudySession(userId);
   const { messages, sendMessage, loading: aiLoading } = useStudyAI(
     userId,
     `${guideKey} Study`
@@ -58,19 +55,28 @@ export function StudySession({ userId: propsUserId }: StudySessionProps) {
   // Timer
   const timer = useSessionTimer();
 
-  // Start session and generate content on mount
+  // Fetch session and generate content on mount
   useEffect(() => {
-    let currentSessionId: string | null = null;
     let canceled = false;
 
     const initSession = async () => {
-      // Start session tracking
-      const id = await startSession(guideKey, 'study');
-      if (id && !canceled) {
-        currentSessionId = id;
-        setSessionId(id);
-        timer.start();
+      if (!sessionId) {
+        setPlanError('No session ID provided');
+        return;
       }
+
+      // Fetch the session from the database
+      const { session: dbSession, error: sessionError } = await getStudySession(sessionId);
+
+      if (sessionError || !dbSession) {
+        setPlanError('Failed to load study session. Please try again.');
+        return;
+      }
+
+      // Get the category from the session
+      const category = (dbSession as any).category || 'paper1';
+      setGuideKey(category);
+      timer.start();
 
       // Generate AI study session
       setAiSessionLoading(true);
@@ -81,7 +87,7 @@ export function StudySession({ userId: propsUserId }: StudySessionProps) {
 
         // Generate study session using igcseGuides
         const { session, error } = await generateStudySession(
-          guideKey,
+          category,
           JSON.stringify(aiNotes),
           userSummary
         );
@@ -111,12 +117,9 @@ export function StudySession({ userId: propsUserId }: StudySessionProps) {
 
     return () => {
       canceled = true;
-      if (currentSessionId) {
-        void handleEndSession();
-      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [guideKey, userId]);
+  }, [sessionId, userId]);
 
   // Auto-save notes every 10 seconds
   useEffect(() => {

@@ -4,13 +4,37 @@ import { FileText, Palette, BookOpen } from 'lucide-react';
 import { Button as ThreeDButton } from '../../components/ui/3d-button';
 import { getAllPracticeGuides, getQuestionTypeColor } from '../../services/practiceContent';
 import { motion } from 'framer-motion';
+import { startPracticeSession } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { useState } from 'react';
 
 const Practice = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const guides = getAllPracticeGuides();
+  const [isStarting, setIsStarting] = useState(false);
 
-  const handleStartPractice = (guideKey: string) => {
-    navigate(`/practice/session?type=${guideKey}`);
+  const handleStartPractice = async (guideKey: string) => {
+    if (!user?.id || isStarting) return;
+
+    setIsStarting(true);
+    try {
+      // Create a practice session in the database first
+      const { sessionId, error } = await startPracticeSession(user.id, guideKey);
+
+      if (error || !sessionId) {
+        alert(`Failed to start practice session: ${error || 'Unknown error'}`);
+        setIsStarting(false);
+        return;
+      }
+
+      // Navigate to the practice session with the session ID and practice type
+      navigate(`/practice/session/${sessionId}?type=${guideKey}`);
+    } catch (err) {
+      console.error('Error starting practice:', err);
+      alert('Failed to start practice session');
+      setIsStarting(false);
+    }
   };
 
   const icons = {
@@ -61,8 +85,9 @@ const Practice = () => {
                   stretch
                   variant="ai"
                   size="lg"
+                  disabled={isStarting}
                 >
-                  Start
+                  {isStarting ? 'Starting...' : 'Start'}
                 </ThreeDButton>
               </motion.div>
             );
